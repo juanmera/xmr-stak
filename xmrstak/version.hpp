@@ -2,7 +2,6 @@
 
 #include <inttypes.h>
 #include <string>
-#include "donate-level.hpp"
 
 extern const char ver_long[];
 extern const char ver_short[];

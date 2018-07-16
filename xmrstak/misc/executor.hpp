@@ -5,7 +5,6 @@
 #include "xmrstak/backend/iBackend.hpp"
 #include "xmrstak/misc/environment.hpp"
 #include "xmrstak/net/msgstruct.hpp"
-#include "xmrstak/donate-level.hpp"
 
 #include <atomic>
 #include <array>
