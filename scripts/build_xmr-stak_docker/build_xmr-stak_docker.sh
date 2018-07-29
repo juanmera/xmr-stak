@@ -11,19 +11,16 @@ else
   git clone https://github.com/fireice-uk/xmr-stak.git
 fi
 
-wget -c https://developer.nvidia.com/compute/cuda/9.0/Prod/local_installers/cuda_9.0.176_384.81_linux-run
-chmod a+x cuda_*_linux-run
 
 
 ########################
 # Fedora 27
 ########################
-# CUDA is not going to work on Fedora 27 beacuse it's only support these distributions: http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html
 docker run --rm -it -v $PWD:/mnt fedora:27 /bin/bash -c "
 set -x ;
 dnf install -y -q cmake gcc-c++ hwloc-devel libmicrohttpd-devel libstdc++-static make openssl-devel;
 cd /mnt/xmr-stak ;
-cmake -DCUDA_ENABLE=OFF -DOpenCL_ENABLE=OFF . ;
+cmake -DOpenCL_ENABLE=OFF . ;
 make ;
 "
 
@@ -40,8 +37,7 @@ set -x ;
 apt update -qq ;
 apt install -y -qq libmicrohttpd-dev libssl-dev cmake build-essential libhwloc-dev ;
 cd /mnt/xmr-stak ;
-/mnt/cuda_*_linux-run --silent --toolkit ;
-cmake -DCUDA_ENABLE=ON -DOpenCL_ENABLE=OFF . ;
+cmake -DOpenCL_ENABLE=OFF . ;
 make ;
 "
 
@@ -58,8 +54,7 @@ set -x ;
 apt update -qq ;
 apt install -y -qq cmake g++ libmicrohttpd-dev libssl-dev libhwloc-dev ;
 cd /mnt/xmr-stak ;
-/mnt/cuda_*_linux-run --silent --toolkit ;
-cmake -DCUDA_ENABLE=ON -DOpenCL_ENABLE=OFF . ;
+cmake -DOpenCL_ENABLE=OFF . ;
 make ;
 "
 
@@ -83,8 +78,7 @@ curl -L https://cmake.org/files/LatestRelease/cmake-3.10.0.tar.gz | tar -xzf - -
 ( cd /tmp/cmake-*/ && ./configure && make && sudo make install && cd - ) > /dev/null
 update-alternatives --install /usr/bin/cmake cmake /usr/local/bin/cmake 1 --force ;
 cd /mnt/xmr-stak ;
-/mnt/cuda_*_linux-run --silent --toolkit ;
-cmake -DCUDA_ENABLE=ON -DOpenCL_ENABLE=OFF . ;
+cmake -DOpenCL_ENABLE=OFF . ;
 make ;
 "
 
@@ -96,14 +90,13 @@ git -C xmr-stak clean -fd
 ########################
 # CentOS 7
 ########################
-# CUDA is not going to work on CentOS/RHEL beacuse it's only support gcc-4 in these distributions: http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html
 docker run --rm -it -v $PWD:/mnt centos:7 /bin/bash -c "
 set -x ;
 yum install -y -q centos-release-scl epel-release ;
 yum install -y -q cmake3 devtoolset-7-gcc* hwloc-devel libmicrohttpd-devel make openssl-devel perl ;
 scl enable devtoolset-7 - << EOF
 cd /mnt/xmr-stak ;
-cmake3 -DCUDA_ENABLE=OFF -DOpenCL_ENABLE=OFF . ;
+cmake3 -DOpenCL_ENABLE=OFF . ;
 make ;
 EOF
 "
@@ -116,14 +109,13 @@ git -C xmr-stak clean -fd
 ########################
 # CentOS 6.x
 ########################
-# CUDA is not going to work on CentOS/RHEL beacuse it's only support gcc-4 in these distributions: http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html
 docker run --rm -it -v $PWD:/mnt centos:6 /bin/bash -c "
 set -x ;
 yum install -y -q centos-release-scl epel-release ;
 yum install -y -q cmake3 devtoolset-7-gcc* hwloc-devel libmicrohttpd-devel openssl-devel make ;
 scl enable devtoolset-7 - << EOF
 cd /mnt/xmr-stak ;
-cmake3 -DCUDA_ENABLE=OFF -DOpenCL_ENABLE=OFF . ;
+cmake3 -DOpenCL_ENABLE=OFF . ;
 make ;
 EOF
 "

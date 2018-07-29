@@ -8,7 +8,6 @@ Assuming you already have [Homebrew](https://brew.sh) installed, the installatio
 
 ```shell
 brew tap caskroom/drivers
-brew cask install nvidia-cuda
 brew install hwloc libmicrohttpd gcc openssl cmake
 cmake . -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DOpenCL_ENABLE=OFF
 make install
@@ -22,7 +21,7 @@ OpenCL is bundled with Xcode, so no other depedency then the basic ones needed. 
 
 ```shell
 brew install hwloc libmicrohttpd gcc openssl cmake
-cmake . -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DCUDA_ENABLE=OFF -DOpenCL_ENABLE=ON
+cmake . -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DOpenCL_ENABLE=ON
 make install
 ```
 
@@ -30,7 +29,7 @@ make install
 
 ```shell
 brew install hwloc libmicrohttpd gcc openssl cmake
-cmake . -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DCUDA_ENABLE=OFF -DOpenCL_ENABLE=OFF
+cmake . -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DOpenCL_ENABLE=OFF
 make install
 ```
 

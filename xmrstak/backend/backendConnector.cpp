@@ -31,9 +31,6 @@
 #include "xmrstak/params.hpp"
 
 #include "cpu/minethd.hpp"
-#ifndef CONF_NO_CUDA
-#	include "nvidia/minethd.hpp"
-#endif
 #ifndef CONF_NO_OPENCL
 #	include "amd/minethd.hpp"
 #endif
@@ -60,16 +57,6 @@ std::vector<iBackend*>* BackendConnector::thread_starter(miner_work& pWork)
 
 	std::vector<iBackend*>* pvThreads = new std::vector<iBackend*>;
 
-#ifndef CONF_NO_CUDA
-	if(params::inst().useNVIDIA)
-	{
-		plugin nvidiaplugin("NVIDIA", "xmrstak_cuda_backend");
-		std::vector<iBackend*>* nvidiaThreads = nvidiaplugin.startBackend(static_cast<uint32_t>(pvThreads->size()), pWork, environment::inst());
-		pvThreads->insert(std::end(*pvThreads), std::begin(*nvidiaThreads), std::end(*nvidiaThreads));
-		if(nvidiaThreads->size() == 0)
-			printer::inst()->print_msg(L0, "WARNING: backend NVIDIA disabled.");
-	}
-#endif
 
 #ifndef CONF_NO_OPENCL
 	if(params::inst().useAMD)
