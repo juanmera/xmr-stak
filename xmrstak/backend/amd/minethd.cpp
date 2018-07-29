@@ -34,7 +34,6 @@
 #include "xmrstak/misc/executor.hpp"
 #include "xmrstak/misc/environment.hpp"
 #include "xmrstak/params.hpp"
-#include "xmrstak/backend/cpu/hwlocMemory.hpp"
 
 #include <assert.h>
 #include <cmath>
@@ -161,9 +160,6 @@ std::vector<iBackend*>* minethd::thread_starter(uint32_t threadOffset, miner_wor
 
 void minethd::work_main()
 {
-	if(affinity >= 0) //-1 means no affinity
-		bindMemoryToNUMANode(affinity);
-
 	order_fix.set_value();
 	std::unique_lock<std::mutex> lck(thd_aff_set);
 	lck.release();

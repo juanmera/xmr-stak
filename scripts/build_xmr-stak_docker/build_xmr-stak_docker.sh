@@ -18,7 +18,7 @@ fi
 ########################
 docker run --rm -it -v $PWD:/mnt fedora:27 /bin/bash -c "
 set -x ;
-dnf install -y -q cmake gcc-c++ hwloc-devel libmicrohttpd-devel libstdc++-static make openssl-devel;
+dnf install -y -q cmake gcc-c++ libmicrohttpd-devel libstdc++-static make openssl-devel;
 cd /mnt/xmr-stak ;
 cmake -DOpenCL_ENABLE=OFF . ;
 make ;
@@ -35,7 +35,7 @@ git -C xmr-stak clean -fd
 docker run --rm -it -v $PWD:/mnt ubuntu:17.04 /bin/bash -c "
 set -x ;
 apt update -qq ;
-apt install -y -qq libmicrohttpd-dev libssl-dev cmake build-essential libhwloc-dev ;
+apt install -y -qq libmicrohttpd-dev libssl-dev cmake build-essential ;
 cd /mnt/xmr-stak ;
 cmake -DOpenCL_ENABLE=OFF . ;
 make ;
@@ -52,7 +52,7 @@ git -C xmr-stak clean -fd
 docker run --rm -it -v $PWD:/mnt ubuntu:16.04 /bin/bash -c "
 set -x ;
 apt update -qq ;
-apt install -y -qq cmake g++ libmicrohttpd-dev libssl-dev libhwloc-dev ;
+apt install -y -qq cmake g++ libmicrohttpd-dev libssl-dev ;
 cd /mnt/xmr-stak ;
 cmake -DOpenCL_ENABLE=OFF . ;
 make ;
@@ -69,7 +69,7 @@ git -C xmr-stak clean -fd
 docker run --rm -it -v $PWD:/mnt ubuntu:14.04 /bin/bash -c "
 set -x ;
 apt update -qq ;
-apt install -y -qq curl libmicrohttpd-dev libssl-dev libhwloc-dev software-properties-common ;
+apt install -y -qq curl libmicrohttpd-dev libssl-dev software-properties-common ;
 add-apt-repository -y ppa:ubuntu-toolchain-r/test ;
 apt update -qq ;
 apt install -y -qq gcc-6 g++-6 make ;
@@ -93,7 +93,7 @@ git -C xmr-stak clean -fd
 docker run --rm -it -v $PWD:/mnt centos:7 /bin/bash -c "
 set -x ;
 yum install -y -q centos-release-scl epel-release ;
-yum install -y -q cmake3 devtoolset-7-gcc* hwloc-devel libmicrohttpd-devel make openssl-devel perl ;
+yum install -y -q cmake3 devtoolset-7-gcc* libmicrohttpd-devel make openssl-devel perl ;
 scl enable devtoolset-7 - << EOF
 cd /mnt/xmr-stak ;
 cmake3 -DOpenCL_ENABLE=OFF . ;
@@ -112,7 +112,7 @@ git -C xmr-stak clean -fd
 docker run --rm -it -v $PWD:/mnt centos:6 /bin/bash -c "
 set -x ;
 yum install -y -q centos-release-scl epel-release ;
-yum install -y -q cmake3 devtoolset-7-gcc* hwloc-devel libmicrohttpd-devel openssl-devel make ;
+yum install -y -q cmake3 devtoolset-7-gcc* libmicrohttpd-devel openssl-devel make ;
 scl enable devtoolset-7 - << EOF
 cd /mnt/xmr-stak ;
 cmake3 -DOpenCL_ENABLE=OFF . ;

@@ -11,7 +11,7 @@
 ### GNU Compiler
 ```
     # Ubuntu / Debian
-    sudo apt install libmicrohttpd-dev libssl-dev cmake build-essential libhwloc-dev
+    sudo apt install libmicrohttpd-dev libssl-dev cmake build-essential
     git clone https://github.com/fireice-uk/xmr-stak.git
     mkdir xmr-stak/build
     cd xmr-stak/build
@@ -19,7 +19,7 @@
     make install
 
     # Arch
-    sudo pacman -S --needed base-devel hwloc openssl cmake libmicrohttpd
+    sudo pacman -S --needed base-devel openssl cmake libmicrohttpd
     git clone https://github.com/fireice-uk/xmr-stak.git
     mkdir xmr-stak/build
     cd xmr-stak/build
@@ -27,7 +27,7 @@
     make install
 
     # Fedora
-    sudo dnf install gcc gcc-c++ hwloc-devel libmicrohttpd-devel libstdc++-static make openssl-devel cmake
+    sudo dnf install gcc gcc-c++ libmicrohttpd-devel libstdc++-static make openssl-devel cmake
     git clone https://github.com/fireice-uk/xmr-stak.git
     mkdir xmr-stak/build
     cd xmr-stak/build
@@ -36,7 +36,7 @@
 
     # CentOS
     sudo yum install centos-release-scl epel-release
-    sudo yum install cmake3 devtoolset-4-gcc* hwloc-devel libmicrohttpd-devel openssl-devel make
+    sudo yum install cmake3 devtoolset-4-gcc* libmicrohttpd-devel openssl-devel make
     scl enable devtoolset-4 bash
     git clone https://github.com/fireice-uk/xmr-stak.git
     mkdir xmr-stak/build
@@ -52,7 +52,7 @@
     curl -L http://www.cmake.org/files/v3.4/cmake-3.4.1.tar.gz | tar -xvzf - -C /tmp/
     cd /tmp/cmake-3.4.1/ && ./configure && make && sudo make install && cd -
     sudo update-alternatives --install /usr/bin/cmake cmake /usr/local/bin/cmake 1 --force
-    sudo apt install libmicrohttpd-dev libssl-dev libhwloc-dev
+    sudo apt install libmicrohttpd-dev libssl-dev
     git clone https://github.com/fireice-uk/xmr-stak.git
     mkdir xmr-stak/build
     cd xmr-stak/build
@@ -64,20 +64,12 @@
     # hosted on the TinyCore home page, and it works well.
     # Beware that huge page support is not enabled in the kernel distributed
     # with Pure 64.  Consider http://wiki.tinycorelinux.net/wiki:custom_kernel
-    # Note that as of yet there are no distro packages for microhttpd or hwloc.
-    # hwloc is easy enough to install manually though, shown below.
+    # Note that as of yet there are no distro packages for microhttpd.
     # Also note that only CPU mining has been tested on this platform, thus the
     # disabling of OpenCL shown below.
     tce-load -iw openssl-dev.tcz cmake.tcz make.tcz gcc.tcz git.tcz \
                  glibc_base-dev.tcz linux-4.8.1_api_headers.tcz \
                  glibc_add_lib.tcz
-    wget https://www.open-mpi.org/software/hwloc/v1.11/downloads/hwloc-1.11.8.tar.gz
-    tar xzvf hwloc-1.11.8.tar.gz
-    cd hwloc-1.11.8
-    ./configure --prefix=/usr/local
-    make
-    sudo make install
-    cd ..
     git clone http://github.com/fireice-uk/xmr-stak
     cd xmr-stak
     mkdir build

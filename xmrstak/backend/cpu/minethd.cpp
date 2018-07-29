@@ -34,14 +34,7 @@
 #include "minethd.hpp"
 #include "xmrstak/jconf.hpp"
 
-#include "hwlocMemory.hpp"
 #include "xmrstak/backend/miner_work.hpp"
-
-#ifndef CONF_NO_HWLOC
-#   include "autoAdjustHwloc.hpp"
-#else
-#   include "autoAdjust.hpp"
-#endif
 
 #include <assert.h>
 #include <cmath>
@@ -309,13 +302,6 @@ std::vector<iBackend*> minethd::thread_starter(uint32_t threadOffset, miner_work
 {
 	std::vector<iBackend*> pvThreads;
 
-	if(!configEditor::file_exist(params::inst().configFileCPU))
-	{
-		autoAdjust adjust;
-		if(!adjust.printConfig())
-			return pvThreads;
-	}
-
 	if(!jconf::inst()->parse_config())
 	{
 		win_exit();
@@ -439,9 +425,6 @@ minethd::cn_hash_fun minethd::func_selector(bool bHaveAes, bool bNoPrefetch, xmr
 
 void minethd::work_main()
 {
-	if(affinity >= 0) //-1 means no affinity
-		bindMemoryToNUMANode(affinity);
-
 	order_fix.set_value();
 	std::unique_lock<std::mutex> lck(thd_aff_set);
 	lck.release();
@@ -780,9 +763,6 @@ void minethd::prep_multiway_work(uint8_t *bWorkBlob, uint32_t **piNonce)
 template<uint32_t N>
 void minethd::multiway_work_main()
 {
-	if(affinity >= 0) //-1 means no affinity
-		bindMemoryToNUMANode(affinity);
-
 	order_fix.set_value();
 	std::unique_lock<std::mutex> lck(thd_aff_set);
 	lck.release();

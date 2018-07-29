@@ -54,9 +54,6 @@ After the configuration you need to compile the miner, follow the guide for your
 ## CPU Build Options
 
 - `CPU_ENABLE` allow to disable/enable the CPU backend of the miner
-- `HWLOC_ENABLE` allow to disable/enable the dependency *hwloc*
-  - the config suggestion is not optimal if option is disabled: `cmake .. -DHWLOC_ENABLE=OFF`
-  - disabling can be reduce the miner performance
 
 ## AMD Build Options
 
