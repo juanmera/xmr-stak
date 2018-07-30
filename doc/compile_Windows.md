@@ -27,7 +27,7 @@
 - Download and install the latest version from https://www.dropbox.com/s/gq8vqhelq0m6gj4/AMD-APP-SDKInstaller-v3.0.130.135-GA-windows-F-x64.exe
   (do not wonder why it is a link to a dropbox but AMD has removed the SDK downloads, see https://community.amd.com/thread/222855)
 
-### Dependencies OpenSSL and Microhttpd
+### Dependencies OpenSSL
 - For AMD GPUs, CPU:
   - Download version 2 of the precompiled binary from https://github.com/fireice-uk/xmr-stak-dep/releases/download/v2/xmr-stak-dep.zip
   - Version 2 of the pre-compiled dependencies is not compatible with Visual Studio Toolset v140
@@ -47,9 +47,6 @@
     Folder PATH listing for volume Windows
     Volume serial number is XX02-XXXX
     C:\XMR-STAK-DEP
-    ├───libmicrohttpd
-    │   ├───include
-    │   └───lib
     └───openssl
         ├───bin
         ├───include
@@ -74,7 +71,7 @@
 
   cd build
 
-  set CMAKE_PREFIX_PATH=C:\xmr-stak-dep\libmicrohttpd;C:\xmr-stak-dep\openssl
+  set CMAKE_PREFIX_PATH=C:\xmr-stak-dep\openssl
   ```
 
 ### CMake

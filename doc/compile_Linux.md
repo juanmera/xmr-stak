@@ -11,7 +11,7 @@
 ### GNU Compiler
 ```
     # Ubuntu / Debian
-    sudo apt install libmicrohttpd-dev libssl-dev cmake build-essential
+    sudo apt install libssl-dev cmake build-essential
     git clone https://github.com/fireice-uk/xmr-stak.git
     mkdir xmr-stak/build
     cd xmr-stak/build
@@ -19,7 +19,7 @@
     make install
 
     # Arch
-    sudo pacman -S --needed base-devel openssl cmake libmicrohttpd
+    sudo pacman -S --needed base-devel openssl cmake
     git clone https://github.com/fireice-uk/xmr-stak.git
     mkdir xmr-stak/build
     cd xmr-stak/build
@@ -27,7 +27,7 @@
     make install
 
     # Fedora
-    sudo dnf install gcc gcc-c++ libmicrohttpd-devel libstdc++-static make openssl-devel cmake
+    sudo dnf install gcc gcc-c++ libstdc++-static make openssl-devel cmake
     git clone https://github.com/fireice-uk/xmr-stak.git
     mkdir xmr-stak/build
     cd xmr-stak/build
@@ -36,7 +36,7 @@
 
     # CentOS
     sudo yum install centos-release-scl epel-release
-    sudo yum install cmake3 devtoolset-4-gcc* libmicrohttpd-devel openssl-devel make
+    sudo yum install cmake3 devtoolset-4-gcc* openssl-devel make
     scl enable devtoolset-4 bash
     git clone https://github.com/fireice-uk/xmr-stak.git
     mkdir xmr-stak/build
@@ -52,7 +52,7 @@
     curl -L http://www.cmake.org/files/v3.4/cmake-3.4.1.tar.gz | tar -xvzf - -C /tmp/
     cd /tmp/cmake-3.4.1/ && ./configure && make && sudo make install && cd -
     sudo update-alternatives --install /usr/bin/cmake cmake /usr/local/bin/cmake 1 --force
-    sudo apt install libmicrohttpd-dev libssl-dev
+    sudo apt install libssl-dev
     git clone https://github.com/fireice-uk/xmr-stak.git
     mkdir xmr-stak/build
     cd xmr-stak/build
@@ -64,7 +64,6 @@
     # hosted on the TinyCore home page, and it works well.
     # Beware that huge page support is not enabled in the kernel distributed
     # with Pure 64.  Consider http://wiki.tinycorelinux.net/wiki:custom_kernel
-    # Note that as of yet there are no distro packages for microhttpd.
     # Also note that only CPU mining has been tested on this platform, thus the
     # disabling of OpenCL shown below.
     tce-load -iw openssl-dev.tcz cmake.tcz make.tcz gcc.tcz git.tcz \
@@ -74,8 +73,7 @@
     cd xmr-stak
     mkdir build
     cd build
-    CC=gcc cmake .. -DOpenCL_ENABLE=OFF \
-                    -DMICROHTTPD_ENABLE=OFF
+    CC=gcc cmake .. -DOpenCL_ENABLE=OFF
     make install
 ```
 

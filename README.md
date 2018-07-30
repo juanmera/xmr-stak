@@ -5,9 +5,6 @@
 
 XMR-Stak is a universal Stratum pool miner. This miner supports CPUs, AMD and NVIDIA gpus and can be used to mine the crypto currency Monero and Aeon.
 
-## HTML reports
-<img src="https://gist.githubusercontent.com/fireice-uk/2da301131ac01695ff79539a27b81d68/raw/4c09cdeee86f94df2e9dd86b927e64aded6184f5/xmr-stak-cpu-hashrate.png" width="260"> <img src="https://gist.githubusercontent.com/fireice-uk/2da301131ac01695ff79539a27b81d68/raw/4c09cdeee86f94df2e9dd86b927e64aded6184f5/xmr-stak-cpu-results.png" width="260"> <img src="https://gist.githubusercontent.com/fireice-uk/2da301131ac01695ff79539a27b81d68/raw/4c09cdeee86f94df2e9dd86b927e64aded6184f5/xmr-stak-cpu-connection.png" width="260">
-
 ## Video setup guide on Windows
 
 [<img src="https://gist.githubusercontent.com/fireice-uk/3621b179d56f57a8ead6303d8e415cf6/raw/f572faba67cc9418116f3c1dfd7783baf52182ce/vidguidetmb.jpg">](https://youtu.be/YNMa8NplWus)
@@ -33,8 +30,6 @@ XMR-Stak is a universal Stratum pool miner. This miner supports CPUs, AMD and NV
   - auto configuration for each backend
 - open source software (GPLv3)
 - TLS support
-- [HTML statistics](doc/usage.md#html-and-json-api-report-configuraton)
-- [JSON API for monitoring](doc/usage.md#html-and-json-api-report-configuraton)
 
 ## Supported altcoins
 

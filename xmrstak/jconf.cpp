@@ -52,7 +52,7 @@ using namespace rapidjson;
  */
 enum configEnum {
 	aPoolList, sCurrency, bTlsSecureAlgo, iCallTimeout, iNetRetry, iGiveUpLimit, iVerboseLevel, bPrintMotd, iAutohashTime,
-	bFlushStdout, bDaemonMode, sOutputFile, iHttpdPort, sHttpLogin, sHttpPass, bPreferIpv4, bAesOverride, sUseSlowMem
+	bFlushStdout, bDaemonMode, sOutputFile, bPreferIpv4, bAesOverride, sUseSlowMem
 };
 
 struct configVal {
@@ -76,9 +76,6 @@ configVal oConfigValues[] = {
 	{ bFlushStdout, "flush_stdout", kTrueType},
 	{ bDaemonMode, "daemon_mode", kTrueType },
 	{ sOutputFile, "output_file", kStringType },
-	{ iHttpdPort, "httpd_port", kNumberType },
-	{ sHttpLogin, "http_login", kStringType },
-	{ sHttpPass, "http_pass", kStringType },
 	{ bPreferIpv4, "prefer_ipv4", kTrueType },
 	{ bAesOverride, "aes_override", kNullType },
 	{ sUseSlowMem, "use_slow_memory", kStringType }
@@ -234,23 +231,6 @@ uint64_t jconf::GetAutohashTime()
 	return prv->configValues[iAutohashTime]->GetUint64();
 }
 
-uint16_t jconf::GetHttpdPort()
-{
-	if(xmrstak::params::inst().httpd_port == xmrstak::params::httpd_port_unset)
-		return prv->configValues[iHttpdPort]->GetUint();
-	else
-		return uint16_t(xmrstak::params::inst().httpd_port);
-}
-
-const char* jconf::GetHttpUsername()
-{
-	return prv->configValues[sHttpLogin]->GetString();
-}
-
-const char* jconf::GetHttpPassword()
-{
-	return prv->configValues[sHttpPass]->GetString();
-}
 
 bool jconf::DaemonMode()
 {
@@ -574,13 +554,6 @@ bool jconf::parse_config(const char* sFilename, const char* sFilenamePools)
 	{
 		printer::inst()->print_msg(L0,
 			"Invalid config file. verbose_level and h_print_time need to be positive integers.");
-		return false;
-	}
-
-	if(!prv->configValues[iHttpdPort]->IsUint() || prv->configValues[iHttpdPort]->GetUint() > 0xFFFF)
-	{
-		printer::inst()->print_msg(L0,
-			"Invalid config file. httpd_port has to be in the range 0 to 65535.");
 		return false;
 	}
 

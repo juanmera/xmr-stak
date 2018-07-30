@@ -66,10 +66,6 @@ public:
 	uint64_t GetNetRetry();
 	uint64_t GetGiveUpLimit();
 
-	uint16_t GetHttpdPort();
-	const char* GetHttpUsername();
-	const char* GetHttpPassword();
-
 	bool DaemonMode();
 
 	bool PreferIpv4();

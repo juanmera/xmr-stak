@@ -43,17 +43,11 @@ After the configuration you need to compile the miner, follow the guide for your
 - `CMAKE_BUILD_TYPE` set the build type
   - valid options: `Release` or `Debug`
   - you should always keep `Release` for your productive miners
-- `MICROHTTPD_ENABLE` allow to disable/enable the dependency *microhttpd*
-  - there is no *http* interface available if option is disabled: `cmake .. -DMICROHTTPD_ENABLE=OFF`
 - `OpenSSL_ENABLE` allow to disable/enable the dependency *OpenSSL*
   - it is not possible to connect to a *https* secured pool if option is disabled: `cmake .. -DOpenSSL_ENABLE=OFF`
 - `XMR-STAK_COMPILE` select the CPU compute architecture (default: native)
   - native means the miner binary can be used only on the system where it is compiled but will archive the highest hash rate
   - use `cmake .. -DXMR-STAK_COMPILE=generic` to run the miner on all CPU's with sse2
-
-## CPU Build Options
-
-- `CPU_ENABLE` allow to disable/enable the CPU backend of the miner
 
 ## AMD Build Options
 

@@ -106,23 +106,19 @@ bool jconf::GetThreadConfig(size_t id, thd_cfg &cfg)
 	if(!oThdConf.IsObject())
 		return false;
 
-	const Value *idx, *intensity, *w_size, *aff, *stridedIndex, *memChunk, *compMode;
+	const Value *idx, *intensity, *w_size, *stridedIndex, *memChunk, *compMode;
 	idx = GetObjectMember(oThdConf, "index");
 	intensity = GetObjectMember(oThdConf, "intensity");
 	w_size = GetObjectMember(oThdConf, "worksize");
-	aff = GetObjectMember(oThdConf, "affine_to_cpu");
 	stridedIndex = GetObjectMember(oThdConf, "strided_index");
 	memChunk = GetObjectMember(oThdConf, "mem_chunk");
 	compMode = GetObjectMember(oThdConf, "comp_mode");
 
-	if(idx == nullptr || intensity == nullptr || w_size == nullptr || aff == nullptr || memChunk == nullptr ||
+	if(idx == nullptr || intensity == nullptr || w_size == nullptr || memChunk == nullptr ||
 		stridedIndex == nullptr || compMode == nullptr)
 		return false;
 
 	if(!idx->IsUint64() || !intensity->IsUint64() || !w_size->IsUint64())
-		return false;
-
-	if(!aff->IsUint64() && !aff->IsBool())
 		return false;
 
 	if(!stridedIndex->IsBool() && !stridedIndex->IsNumber())
@@ -157,11 +153,6 @@ bool jconf::GetThreadConfig(size_t id, thd_cfg &cfg)
 	cfg.w_size = w_size->GetUint64();
 	cfg.intensity = intensity->GetUint64();
 	cfg.compMode = compMode->GetBool();
-
-	if(aff->IsNumber())
-		cfg.cpu_aff = aff->GetInt64();
-	else
-		cfg.cpu_aff = -1;
 
 	return true;
 }

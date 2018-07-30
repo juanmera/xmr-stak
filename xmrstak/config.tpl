@@ -129,28 +129,6 @@ R"===(
  */
 "output_file" : "",
 
-/*
- * Built-in web server
- * I like checking my hashrate on my phone. Don't you?
- * Keep in mind that you will need to set up port forwarding on your router if you want to access it from
- * outside of your home network. Ports lower than 1024 on Linux systems will require root.
- *
- * httpd_port - Port we should listen on. Default, 0, will switch off the server.
- */
-"httpd_port" : HTTP_PORT,
-
-/*
- * HTTP Authentication
- *
- * This allows you to set a password to keep people on the Internet from snooping on your hashrate.
- * Keep in mind that this is based on HTTP Digest, which is based on MD5. To a determined attacker
- * who is able to read your traffic it is as easy to break a bog door latch.
- *
- * http_login - Login. Empty login disables authentication.
- * http_pass  - Password.
- */
-"http_login" : "",
-"http_pass" : "",
 
 /*
  * prefer_ipv4 - IPv6 preference. If the host is available on both IPv4 and IPv6 net, which one should be choose?

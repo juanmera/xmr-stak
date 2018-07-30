@@ -56,18 +56,12 @@ minethd::minethd(miner_work& pWork, size_t iNo, GpuContext* ctx, const jconf::th
 	iHashCount = 0;
 	iTimestamp = 0;
 	pGpuCtx = ctx;
-	this->affinity = cfg.cpu_aff;
 
-	std::unique_lock<std::mutex> lck(thd_aff_set);
 	std::future<void> order_guard = order_fix.get_future();
 
 	oWorkThd = std::thread(&minethd::work_main, this);
 
 	order_guard.wait();
-
-	if(affinity >= 0) //-1 means no affinity
-		if(!cpu::minethd::thd_setaffinity(oWorkThd.native_handle(), affinity))
-			printer::inst()->print_msg(L1, "WARNING setting affinity failed.");
 }
 
 extern "C"  {
@@ -139,17 +133,6 @@ std::vector<iBackend*>* minethd::thread_starter(uint32_t threadOffset, miner_wor
 
 		const std::string backendName = xmrstak::params::inst().openCLVendor;
 
-		if(cfg.cpu_aff >= 0)
-		{
-#if defined(__APPLE__)
-			printer::inst()->print_msg(L1, "WARNING on macOS thread affinity is only advisory.");
-#endif
-
-			printer::inst()->print_msg(L1, "Starting %s GPU (OpenCL) thread %d, affinity: %d.", backendName.c_str(), i, (int)cfg.cpu_aff);
-		}
-		else
-			printer::inst()->print_msg(L1, "Starting %s GPU (OpenCL) thread %d, no affinity.", backendName.c_str(), i);
-
 		minethd* thd = new minethd(pWork, i + threadOffset, &vGpuData[i], cfg);
 		pvThreads->push_back(thd);
 	}
@@ -161,8 +144,6 @@ std::vector<iBackend*>* minethd::thread_starter(uint32_t threadOffset, miner_wor
 void minethd::work_main()
 {
 	order_fix.set_value();
-	std::unique_lock<std::mutex> lck(thd_aff_set);
-	lck.release();
 	std::this_thread::yield();
 
 	uint64_t iCount = 0;

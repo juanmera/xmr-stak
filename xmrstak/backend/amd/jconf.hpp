@@ -25,7 +25,6 @@ public:
 		size_t index;
 		size_t intensity;
 		size_t w_size;
-		long long cpu_aff;
 		int stridedIndex;
 		int memChunk;
 		bool compMode;

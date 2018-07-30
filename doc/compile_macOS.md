@@ -8,7 +8,7 @@ Assuming you already have [Homebrew](https://brew.sh) installed, the installatio
 
 ```shell
 brew tap caskroom/drivers
-brew install libmicrohttpd gcc openssl cmake
+brew install gcc openssl cmake
 cmake . -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DOpenCL_ENABLE=OFF
 make install
 ```
@@ -20,7 +20,7 @@ make install
 OpenCL is bundled with Xcode, so no other depedency then the basic ones needed. Just enable OpenCL via the `-DOpenCL_ENABLE=ON` CMake option.
 
 ```shell
-brew install libmicrohttpd gcc openssl cmake
+brew install gcc openssl cmake
 cmake . -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DOpenCL_ENABLE=ON
 make install
 ```
@@ -28,7 +28,7 @@ make install
 ### For CPU-only mining
 
 ```shell
-brew install libmicrohttpd gcc openssl cmake
+brew install gcc openssl cmake
 cmake . -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DOpenCL_ENABLE=OFF
 make install
 ```

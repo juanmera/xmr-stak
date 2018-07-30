@@ -6,7 +6,7 @@
 
 From the root shell, run the following commands:
 
-    pkg install git libmicrohttpd cmake
+    pkg install git cmake
 
 Type 'y' and hit enter to proceed with installing the packages.
 

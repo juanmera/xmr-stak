@@ -4,7 +4,6 @@ R"===(
  * index         - GPU index number usually starts from 0
  * intensity     - Number of parallel GPU threads (nothing to do with CPU threads)
  * worksize      - Number of local GPU threads (nothing to do with CPU threads)
- * affine_to_cpu - This will affine the thread to a CPU. This can make a GPU miner play along nicer with a CPU miner.
  * strided_index - switch memory pattern used for the scratch pad memory
  *                 2 = chunked memory, chunk size is controlled by 'mem_chunk'
  *                     required: intensity must be a multiple of worksize
@@ -19,7 +18,7 @@ R"===(
  *                 in this case set the intensity to a multiple of the worksize or activate comp_mode.
  * "gpu_threads_conf" :
  * [
- *	{ "index" : 0, "intensity" : 1000, "worksize" : 8, "affine_to_cpu" : false, "strided_index" : true, "mem_chunk" : 2, "comp_mode" : true },
+ *	{ "index" : 0, "intensity" : 1000, "worksize" : 8, "strided_index" : true, "mem_chunk" : 2, "comp_mode" : true },
  * ],
  * If you do not wish to mine with your AMD GPU(s) then use:
  * "gpu_threads_conf" :

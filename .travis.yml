@@ -13,7 +13,6 @@ addons:
   apt:
     packages: &default_packages
       - cmake
-      - libmicrohttpd-dev
       - libssl-dev
 
 matrix:
@@ -48,7 +47,7 @@ matrix:
         - CMAKE_C_COMPILER=gcc-6
         - XMRSTAK_CMAKE_FLAGS="-DOpenCL_ENABLE=OFF"
 
-    # test with disabled MICROHTTPD, OpenSSL and no accelerators
+    # test with disabled OpenSSL and no accelerators
     - os: linux
       compiler: gcc
       addons:
@@ -62,7 +61,7 @@ matrix:
       env:
         - CMAKE_CXX_COMPILER=g++-6
         - CMAKE_C_COMPILER=gcc-6
-        - XMRSTAK_CMAKE_FLAGS="-DOpenCL_ENABLE=OFF -DOpenSSL_ENABLE=OFF -DMICROHTTPD_ENABLE=OFF"
+        - XMRSTAK_CMAKE_FLAGS="-DOpenCL_ENABLE=OFF -DOpenSSL_ENABLE=OFF"
 
     - os: linux
       compiler: gcc
@@ -93,7 +92,7 @@ before_install:
 
 script:
   - if [ $TRAVIS_OS_NAME = osx ]; then
-      cmake -DMICROHTTPD_ENABLE=OFF -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl ${XMRSTAK_CMAKE_FLAGS} .;
+      cmake -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl ${XMRSTAK_CMAKE_FLAGS} .;
     else
       cmake -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} ${XMRSTAK_CMAKE_FLAGS} .;
     fi;

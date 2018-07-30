@@ -24,12 +24,10 @@ public:
 	struct thd_cfg {
 		int iMultiway;
 		bool bNoPrefetch;
-		long long iCpuAff;
 	};
 
 	size_t GetThreadCount();
 	bool GetThreadConfig(size_t id, thd_cfg &cfg);
-	bool NeedsAutoconf();
 
 private:
 	jconf();

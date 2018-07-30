@@ -5,7 +5,6 @@
 
 extern const char ver_long[];
 extern const char ver_short[];
-extern const char ver_html[];
 
 inline std::string get_version_str()
 {
