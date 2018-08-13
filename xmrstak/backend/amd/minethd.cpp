@@ -32,7 +32,7 @@
 #include "xmrstak/backend/cpu/minethd.hpp"
 #include "xmrstak/jconf.hpp"
 #include "xmrstak/misc/executor.hpp"
-#include "xmrstak/misc/environment.hpp"
+#include "xmrstak/misc/Environment.hpp"
 #include "xmrstak/params.hpp"
 
 #include <assert.h>
@@ -46,7 +46,7 @@ namespace xmrstak
 namespace amd
 {
 
-minethd::minethd(miner_work& pWork, size_t iNo, GpuContext* ctx, const jconf::thd_cfg cfg)
+minethd::minethd(miner_work &pWork, size_t iNo, GpuContext *ctx)
 {
 	this->backendType = iBackend::AMD;
 	oWork = pWork;
@@ -68,9 +68,9 @@ extern "C"  {
 #ifdef WIN32
 __declspec(dllexport)
 #endif
-std::vector<iBackend*>* xmrstak_start_backend(uint32_t threadOffset, miner_work& pWork, environment& env)
+std::vector<iBackend*>* xmrstak_start_backend(uint32_t threadOffset, miner_work& pWork, Environment& env)
 {
-	environment::inst(&env);
+	Environment::inst(&env);
 	return amd::minethd::thread_starter(threadOffset, pWork);
 }
 } // extern "C"
@@ -79,7 +79,7 @@ bool minethd::init_gpus()
 {
 	size_t i, n = jconf::inst()->GetThreadCount();
 
-	printer::inst()->print_msg(L1, "Compiling code and initializing GPUs. This will take a while...");
+	Printer::inst()->print_msg(L1, "Compiling code and initializing GPUs. This will take a while...");
 	vGpuData.resize(n);
 
 	jconf::thd_cfg cfg;
@@ -119,7 +119,7 @@ std::vector<iBackend*>* minethd::thread_starter(uint32_t threadOffset, miner_wor
 
 	if(!init_gpus())
 	{
-		printer::inst()->print_msg(L1, "WARNING: AMD device not found");
+		Printer::inst()->print_msg(L1, "WARNING: AMD device not found");
 		return pvThreads;
 	}
 
@@ -131,9 +131,7 @@ std::vector<iBackend*>* minethd::thread_starter(uint32_t threadOffset, miner_wor
 	{
 		jconf::inst()->GetThreadConfig(i, cfg);
 
-		const std::string backendName = xmrstak::params::inst().openCLVendor;
-
-		minethd* thd = new minethd(pWork, i + threadOffset, &vGpuData[i], cfg);
+		minethd* thd = new minethd(pWork, i + threadOffset, &vGpuData[i]);
 		pvThreads->push_back(thd);
 	}
 
@@ -141,8 +139,7 @@ std::vector<iBackend*>* minethd::thread_starter(uint32_t threadOffset, miner_wor
 }
 
 
-void minethd::work_main()
-{
+void minethd::work_main() {
 	order_fix.set_value();
 	std::this_thread::yield();
 
@@ -151,42 +148,36 @@ void minethd::work_main()
 	cpu_ctx = cpu::minethd::minethd_alloc_ctx();
 
 	// start with root algorithm and switch later if fork version is reached
-	auto miner_algo = ::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgoRoot();
-	cn_hash_fun hash_fun = cpu::minethd::func_selector(::jconf::inst()->HaveHardwareAes(), true /*bNoPrefetch*/, miner_algo);
+	auto miner_algo = ::jconf::inst()->GetCurrentCoinSelection().GetDescription().GetMiningAlgoRoot();
+	cn_hash_fun hash_fun = cpu::minethd::func_selector(miner_algo);
 
 	uint8_t version = 0;
 	size_t lastPoolId = 0;
 
-	while (bQuit == 0)
-	{
-		if (oWork.bStall)
-		{
-			/* We are stalled here because the executor didn't find a job for us yet,
+	while (bQuit == 0) {
+		if (oWork.bStall) {
+			/* We are stalled here because the Executor didn't find a job for us yet,
 			 * either because of network latency, or a socket problem. Since we are
 			 * raison d'etre of this software it us sensible to just wait until we have something
 			 */
 
-			while (globalStates::inst().iGlobalJobNo.load(std::memory_order_relaxed) == iJobNo)
+			while (GlobalStates::inst().iGlobalJobNo.load(std::memory_order_relaxed) == iJobNo) {
 				std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			}
 
-			globalStates::inst().consume_work(oWork, iJobNo);
+			GlobalStates::inst().consume_work(oWork, iJobNo);
 			continue;
 		}
 
 		uint8_t new_version = oWork.getVersion();
-		if(new_version != version || oWork.iPoolId != lastPoolId)
-		{
-			coinDescription coinDesc = ::jconf::inst()->GetCurrentCoinSelection().GetDescription(oWork.iPoolId);
-			if(new_version >= coinDesc.GetMiningForkVersion())
-			{
+		if(new_version != version || oWork.iPoolId != lastPoolId) {
+			coinDescription coinDesc = ::jconf::inst()->GetCurrentCoinSelection().GetDescription();
+			if(new_version >= coinDesc.GetMiningForkVersion()) {
 				miner_algo = coinDesc.GetMiningAlgo();
-				hash_fun = cpu::minethd::func_selector(::jconf::inst()->HaveHardwareAes(), true /*bNoPrefetch*/, miner_algo);
-			}
-			else
-			{
+			} else {
 				miner_algo = coinDesc.GetMiningAlgoRoot();
-				hash_fun = cpu::minethd::func_selector(::jconf::inst()->HaveHardwareAes(), true /*bNoPrefetch*/, miner_algo);
 			}
+			hash_fun = cpu::minethd::func_selector(miner_algo);
 			lastPoolId = oWork.iPoolId;
 			version = new_version;
 		}
@@ -199,17 +190,16 @@ void minethd::work_main()
 
 		XMRSetJob(pGpuCtx, oWork.bWorkBlob, oWork.iWorkSize, target, miner_algo);
 
-		if(oWork.bNiceHash)
-			pGpuCtx->Nonce = *(uint32_t*)(oWork.bWorkBlob + 39);
+		if(oWork.bNiceHash) {
+		    pGpuCtx->Nonce = *(uint32_t*)(oWork.bWorkBlob + 39);
+		}
 
-		while(globalStates::inst().iGlobalJobNo.load(std::memory_order_relaxed) == iJobNo)
-		{
+		while(GlobalStates::inst().iGlobalJobNo.load(std::memory_order_relaxed) == iJobNo) {
 			//Allocate a new nonce every 16 rounds
-			if((round_ctr++ & 0xF) == 0)
-			{
-				globalStates::inst().calc_start_nonce(pGpuCtx->Nonce, oWork.bNiceHash, h_per_round * 16);
+			if((round_ctr++ & 0xF) == 0) {
+				GlobalStates::inst().calc_start_nonce(pGpuCtx->Nonce, oWork.bNiceHash, h_per_round * 16);
 				// check if the job is still valid, there is a small possibility that the job is switched
-				if(globalStates::inst().iGlobalJobNo.load(std::memory_order_relaxed) != iJobNo)
+				if(GlobalStates::inst().iGlobalJobNo.load(std::memory_order_relaxed) != iJobNo)
 					break;
 			}
 			
@@ -219,8 +209,7 @@ void minethd::work_main()
 
 			XMRRunJob(pGpuCtx, results, miner_algo);
 
-			for(size_t i = 0; i < results[0xFF]; i++)
-			{
+			for(size_t i = 0; i < results[0xFF]; i++) {
 				uint8_t	bWorkBlob[112];
 				uint8_t	bResult[32];
 
@@ -231,9 +220,9 @@ void minethd::work_main()
 
 				hash_fun(bWorkBlob, oWork.iWorkSize, bResult, cpu_ctx);
 				if ( (*((uint64_t*)(bResult + 24))) < oWork.iTarget)
-					executor::inst()->push_event(ex_event(job_result(oWork.sJobID, results[i], bResult, iThreadNo), oWork.iPoolId));
+					Executor::inst()->push_event(ex_event(job_result(oWork.sJobID, results[i], bResult, iThreadNo), oWork.iPoolId));
 				else
-					executor::inst()->push_event(ex_event("AMD Invalid Result", pGpuCtx->deviceIdx, oWork.iPoolId));
+					Executor::inst()->push_event(ex_event("AMD Invalid Result", pGpuCtx->deviceIdx, oWork.iPoolId));
 			}
 
 			iCount += pGpuCtx->rawIntensity;
@@ -243,7 +232,7 @@ void minethd::work_main()
 			std::this_thread::yield();
 		}
 
-		globalStates::inst().consume_work(oWork, iJobNo);
+		GlobalStates::inst().consume_work(oWork, iJobNo);
 	}
 }
 

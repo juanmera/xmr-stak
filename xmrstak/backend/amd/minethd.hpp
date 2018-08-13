@@ -5,7 +5,7 @@
 #include "xmrstak/backend/cpu/crypto/cryptonight.h"
 #include "xmrstak/backend/miner_work.hpp"
 #include "xmrstak/backend/iBackend.hpp"
-#include "xmrstak/misc/environment.hpp"
+#include "xmrstak/misc/Environment.hpp"
 
 #include <thread>
 #include <atomic>
@@ -26,7 +26,7 @@ public:
 private:
 	typedef void (*cn_hash_fun)(const void*, size_t, void*, cryptonight_ctx*);
 
-	minethd(miner_work& pWork, size_t iNo, GpuContext* ctx, const jconf::thd_cfg cfg);
+	minethd(miner_work &pWork, size_t iNo, GpuContext *ctx);
 
 	void work_main();
 
@@ -38,7 +38,6 @@ private:
 	std::thread oWorkThd;
 
 	bool bQuit;
-	bool bNoPrefetch;
 
 	//Mutable ptr to vector below, different for each thread
 	GpuContext* pGpuCtx;

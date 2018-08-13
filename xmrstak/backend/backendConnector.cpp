@@ -24,9 +24,9 @@
 #include "iBackend.hpp"
 #include "backendConnector.hpp"
 #include "miner_work.hpp"
-#include "globalStates.hpp"
+#include "GlobalStates.hpp"
 #include "plugin.hpp"
-#include "xmrstak/misc/environment.hpp"
+#include "xmrstak/misc/Environment.hpp"
 #include "xmrstak/misc/console.hpp"
 #include "xmrstak/params.hpp"
 
@@ -44,33 +44,25 @@
 #include <bitset>
 
 
-namespace xmrstak
-{
+namespace xmrstak {
 
-bool BackendConnector::self_test()
-{
+bool BackendConnector::self_test() {
 	return cpu::minethd::self_test();
 }
 
-std::vector<iBackend*>* BackendConnector::thread_starter(miner_work& pWork)
-{
+std::vector<iBackend*>* BackendConnector::thread_starter(miner_work& pWork) {
 
 	std::vector<iBackend*>* pvThreads = new std::vector<iBackend*>;
 
+// FIXME: Now it's only for AMD OpenCL. It can probably be simplified
+	const std::string backendName = xmrstak::params::inst().openCLVendor;
+	plugin amdplugin(backendName, "xmrstak_opencl_backend");
+	std::vector<iBackend*>* amdThreads = amdplugin.startBackend(static_cast<uint32_t>(pvThreads->size()), pWork, Environment::inst());
+	pvThreads->insert(std::end(*pvThreads), std::begin(*amdThreads), std::end(*amdThreads));
+	if(amdThreads->size() == 0)
+		Printer::inst()->print_msg(L0, "WARNING: backend %s (OpenCL) disabled.", backendName.c_str());
 
-#ifndef CONF_NO_OPENCL
-	if(params::inst().useAMD)
-	{
-		const std::string backendName = xmrstak::params::inst().openCLVendor;
-		plugin amdplugin(backendName, "xmrstak_opencl_backend");
-		std::vector<iBackend*>* amdThreads = amdplugin.startBackend(static_cast<uint32_t>(pvThreads->size()), pWork, environment::inst());
-		pvThreads->insert(std::end(*pvThreads), std::begin(*amdThreads), std::end(*amdThreads));
-		if(amdThreads->size() == 0)
-			printer::inst()->print_msg(L0, "WARNING: backend %s (OpenCL) disabled.", backendName.c_str());
-	}
-#endif
-
-	globalStates::inst().iThreadCount = pvThreads->size();
+	GlobalStates::inst().iThreadCount = pvThreads->size();
 	return pvThreads;
 }
 

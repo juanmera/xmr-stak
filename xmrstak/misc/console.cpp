@@ -152,20 +152,20 @@ inline void comp_localtime(const time_t* ctime, tm* stime)
 #endif // __WIN32
 }
 
-printer::printer()
+Printer::Printer()
 {
 	verbose_level = LINF;
 	logfile = nullptr;
 	b_flush_stdout = false;
 }
 
-bool printer::open_logfile(const char* file)
+bool Printer::open_logfile(const char* file)
 {
 	logfile = fopen(file, "ab+");
 	return logfile != nullptr;
 }
 
-void printer::print_msg(verbosity verbose, const char* fmt, ...)
+void Printer::print_msg(verbosity verbose, const char* fmt, ...)
 {
 	if(verbose > verbose_level)
 		return;
@@ -206,7 +206,7 @@ void printer::print_msg(verbosity verbose, const char* fmt, ...)
 	}
 }
 
-void printer::print_str(const char* str)
+void Printer::print_str(const char* str)
 {
 	std::unique_lock<std::mutex> lck(print_mutex);
 	fputs(str, stdout);
@@ -231,7 +231,7 @@ void win_exit(int code)
 	getenv_s(&envSize, nullptr, 0, "XMRSTAK_NOWAIT");
 	if(envSize == 0)
 	{
-		printer::inst()->print_str("Press any key to exit.");
+		Printer::inst()->print_str("Press any key to exit.");
 		get_key();
 	}
 	std::exit(code);

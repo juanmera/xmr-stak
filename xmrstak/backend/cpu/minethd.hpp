@@ -11,51 +11,15 @@
 #include <atomic>
 #include <future>
 
-namespace xmrstak
-{
-namespace cpu
-{
+namespace xmrstak {
+namespace cpu {
 
-class minethd : public iBackend
-{
+class minethd : public iBackend {
 public:
-	static std::vector<iBackend*> thread_starter(uint32_t threadOffset, miner_work& pWork);
+    typedef void (*cn_hash_fun)(const void*, size_t, void*, cryptonight_ctx*);
 	static bool self_test();
-
-	typedef void (*cn_hash_fun)(const void*, size_t, void*, cryptonight_ctx*);
-
-	static cn_hash_fun func_selector(bool bHaveAes, bool bNoPrefetch, xmrstak_algo algo);
-
+	static cn_hash_fun func_selector(xmrstak_algo algo);
 	static cryptonight_ctx* minethd_alloc_ctx();
-
-private:
-	typedef void (*cn_hash_fun_multi)(const void*, size_t, void*, cryptonight_ctx**);
-	static cn_hash_fun_multi func_multi_selector(size_t N, bool bHaveAes, bool bNoPrefetch, xmrstak_algo algo);
-
-	minethd(miner_work& pWork, size_t iNo, int iMultiway, bool no_prefetch);
-
-	template<uint32_t N>
-	void multiway_work_main();
-
-	template<size_t N>
-	void prep_multiway_work(uint8_t *bWorkBlob, uint32_t **piNonce);
-
-	void work_main();
-	void double_work_main();
-	void triple_work_main();
-	void quad_work_main();
-	void penta_work_main();
-
-	uint64_t iJobNo;
-
-	miner_work oWork;
-
-	std::promise<void> order_fix;
-
-	std::thread oWorkThd;
-
-	bool bQuit;
-	bool bNoPrefetch;
 };
 
 } // namespace cpu

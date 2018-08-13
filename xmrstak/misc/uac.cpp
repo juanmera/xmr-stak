@@ -1,30 +1,30 @@
 #ifdef _WIN32
 #include "xmrstak/misc/console.hpp"
-#include "xmrstak/params.hpp"
+//#include "xmrstak/params.hpp"
 
 #include <string>
 #include <windows.h>
 
-BOOL IsElevated()
-{
+BOOL IsElevated() {
 	BOOL fRet = FALSE;
 	HANDLE hToken = NULL;
-	if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken))
-	{
+	if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken)) {
 		TOKEN_ELEVATION Elevation;
 		DWORD cbSize = sizeof(TOKEN_ELEVATION);
-		if (GetTokenInformation(hToken, TokenElevation, &Elevation, sizeof(Elevation), &cbSize))
-			fRet = Elevation.TokenIsElevated;
+		if (GetTokenInformation(hToken, TokenElevation, &Elevation, sizeof(Elevation), &cbSize)) {
+		    fRet = Elevation.TokenIsElevated;
+		}
 	}
-	if (hToken)
-		CloseHandle(hToken);
+	if (hToken) {
+	    CloseHandle(hToken);
+	}
 	return fRet;
 }
 
-BOOL SelfElevate(const std::string& my_path, const std::string& params)
-{
-	if (IsElevated())
-		return FALSE;
+BOOL SelfElevate(const std::string& my_path, const std::string& params) {
+	if (IsElevated()) {
+	    return FALSE;
+	}
 
 	SHELLEXECUTEINFO shExecInfo = { 0 };
 	shExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
@@ -37,25 +37,25 @@ BOOL SelfElevate(const std::string& my_path, const std::string& params)
 	shExecInfo.nShow = SW_SHOW;
 	shExecInfo.hInstApp = NULL;
 
-	if (!ShellExecuteEx(&shExecInfo))
-		return FALSE;
+	if (!ShellExecuteEx(&shExecInfo)) {
+	    return FALSE;
+	}
 
 	// Loiter in the background to make scripting easier
-	printer::inst()->print_msg(L0, "This window has been opened because xmr-stak needed to run as administrator.  It can be safely closed now.");
+	Printer::inst()->print_msg(L0, "This window has been opened because xmr-stak needed to run as administrator.  It can be safely closed now.");
 	WaitForSingleObject(shExecInfo.hProcess, INFINITE);
 	std::exit(0);
 
 	return TRUE;
 }
 
-VOID RequestElevation()
-{
-	if(IsElevated())
+VOID RequestElevation() {
+	if(IsElevated()) {
 		return;
+	}
 
-	if(!xmrstak::params::inst().allowUAC)
-	{
-		printer::inst()->print_msg(L0, "The miner needs to run as administrator, but you passed --noUAC option. Please remove it or set use_slow_memory to always.");
+	if(!xmrstak::params::inst().allowUAC) {
+		Printer::inst()->print_msg(L0, "The miner needs to run as administrator, but you passed --noUAC option. Please remove it or set use_slow_memory to always.");
 		win_exit();
 		return;
 	}
@@ -63,8 +63,7 @@ VOID RequestElevation()
 	SelfElevate(xmrstak::params::inst().minerArg0, xmrstak::params::inst().minerArgs);
 }
 
-BOOL IsWindows10OrNewer()
-{
+BOOL IsWindows10OrNewer() {
     OSVERSIONINFOEX osvi = { 0 };
     osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
     osvi.dwMajorVersion = 10;

@@ -59,12 +59,12 @@ typedef GenericDocument<UTF8<>, MemoryPoolAllocator<>, MemoryPoolAllocator<>> Me
  *
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  * ASSUMPTION - only one calling thread. Multiple calling threads would require better
- * thread safety. The calling thread is assumed to be the executor thread.
- * If there is a reason to call the pool outside of the executor context, consider
- * doing it via an executor event.
+ * thread safety. The calling thread is assumed to be the Executor thread.
+ * If there is a reason to call the pool outside of the Executor context, consider
+ * doing it via an Executor event.
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  *
- * Call values and allocators are for the calling thread (executor). When processing
+ * Call values and allocators are for the calling thread (Executor). When processing
  * a call, the recv thread will make a copy of the call response and then erase its copy.
  */
 
@@ -150,10 +150,8 @@ bool jpsock::set_socket_error(const char* a)
 	return false;
 }
 
-bool jpsock::set_socket_error(const char* a, const char* b)
-{
-	if(!bHaveSocketError)
-	{
+bool jpsock::set_socket_error(const char* a, const char* b) {
+	if(!bHaveSocketError) {
 		bHaveSocketError = true;
 		size_t ln_a = strlen(a);
 		size_t ln_b = strlen(b);
@@ -177,8 +175,7 @@ bool jpsock::set_socket_error(const char* a, size_t len)
 	return false;
 }
 
-bool jpsock::set_socket_error_strerr(const char* a)
-{
+bool jpsock::set_socket_error_strerr(const char* a) {
 	char sSockErrText[512];
 	return set_socket_error(a, sock_strerror(sSockErrText, sizeof(sSockErrText)));
 }
@@ -196,7 +193,7 @@ void jpsock::jpsock_thread()
 	if(!bHaveSocketError)
 		set_socket_error("Socket closed.");
 
-	executor::inst()->push_event(ex_event(std::move(sSocketError), quiet_close, pool_id));
+	Executor::inst()->push_event(ex_event(std::move(sSocketError), quiet_close, pool_id));
 
 	std::unique_lock<std::mutex> mlock(call_mutex);
 	bool bWait = prv->oCallRsp.pCallData != nullptr;
@@ -241,7 +238,7 @@ bool jpsock::jpsock_thd_main()
 	if(!sck->connect())
 		return false;
 
-	executor::inst()->push_event(ex_event(EV_SOCK_READY, pool_id));
+	Executor::inst()->push_event(ex_event(EV_SOCK_READY, pool_id));
 
 	char buf[iSockBufferSize];
 	size_t datalen = 0;
@@ -311,7 +308,7 @@ bool jpsock::process_line(char* line, size_t len)
 
 		if(strcmp(mt->GetString(), "mining.set_extranonce") == 0)
 		{
-			printer::inst()->print_msg(L0, "Detected buggy NiceHash pool code. Workaround engaged.");
+			Printer::inst()->print_msg(L0, "Detected buggy NiceHash pool code. Workaround engaged.");
 			return true;
 		}
 
@@ -486,7 +483,7 @@ bool jpsock::process_pool_job(const opq_json_val* params, const uint64_t message
 	oCurrentJob = oPoolJob;
 	lck.unlock();
 	// send event after current job data are updated
-	executor::inst()->push_event(ex_event(oPoolJob, pool_id));
+	Executor::inst()->push_event(ex_event(oPoolJob, pool_id));
 
 	return true;
 }

@@ -1,29 +1,22 @@
 #pragma once
 
-#include "xmrstak/misc/environment.hpp"
+#include "xmrstak/misc/Environment.hpp"
 
 #include <string>
 
-namespace xmrstak
-{
-
-struct params
-{
-
-	static inline params& inst()
-	{
-		auto& env = environment::inst();
+namespace xmrstak {
+struct params {
+	static inline params& inst() {
+		auto& env = Environment::inst();
 		if(env.pParams == nullptr)
 			env.pParams = new params;
 		return *env.pParams;
 	}
 
-	std::string executablePrefix;
 	std::string binaryName;
+	std::string executablePrefix;
 	bool useAMD;
 	bool AMDCache;
-	bool useNVIDIA;
-	bool useCPU;
 	// user selected OpenCL vendor
 	std::string openCLVendor;
 
@@ -41,8 +34,6 @@ struct params
 	std::string configFile;
 	std::string configFilePools;
 	std::string configFileAMD;
-	std::string configFileNVIDIA;
-	std::string configFileCPU;
 
 	bool allowUAC = true;
 	std::string minerArg0;
@@ -58,16 +49,11 @@ struct params
 		executablePrefix(""),
 		useAMD(true),
 		AMDCache(true),
-		useNVIDIA(true),
-		useCPU(true),
 		openCLVendor("AMD"),
 		configFile("config.txt"),
 		configFilePools("pools.txt"),
-		configFileAMD("amd.txt"),
-		configFileCPU("cpu.txt"),
-		configFileNVIDIA("nvidia.txt")
-	{}
+		configFileAMD("amd.txt") {
+	}
 
 };
-
 } // namespace xmrstak

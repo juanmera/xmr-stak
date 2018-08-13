@@ -64,11 +64,11 @@ struct sock_err
 };
 
 // Unlike socket errors, GPU errors are read-only strings
-struct gpu_res_err
-{
+struct gpu_res_err {
 	size_t idx; // GPU index
 	const char* error_str;
-	gpu_res_err(const char* error_str, size_t idx) : error_str(error_str), idx(idx) {}
+	gpu_res_err(const char* error_str, size_t idx) : idx(idx), error_str(error_str) {
+	}
 };
 
 enum ex_event_name { EV_INVALID_VAL, EV_SOCK_READY, EV_SOCK_ERROR, EV_GPU_RES_ERROR,
@@ -85,13 +85,11 @@ enum ex_event_name { EV_INVALID_VAL, EV_SOCK_READY, EV_SOCK_ERROR, EV_GPU_RES_ER
    Also note that for non-arg events we only copy two qwords
 */
 
-struct ex_event
-{
+struct ex_event {
 	ex_event_name iName;
 	size_t iPoolId;
 
-	union
-	{
+	union {
 		pool_job oPoolJob;
 		job_result oJobResult;
 		sock_err oSocketError;
@@ -109,13 +107,11 @@ struct ex_event
 	ex_event(ex_event const&) = delete;
 	ex_event& operator=(ex_event const&) = delete;
 
-	ex_event(ex_event&& from)
-	{
+	ex_event(ex_event&& from) {
 		iName = from.iName;
 		iPoolId = from.iPoolId;
 
-		switch(iName)
-		{
+		switch(iName) {
 		case EV_SOCK_ERROR:
 			new (&oSocketError) sock_err(std::move(from.oSocketError));
 			break;
@@ -132,18 +128,17 @@ struct ex_event
 		}
 	}
 
-	ex_event& operator=(ex_event&& from)
-	{
+	ex_event& operator=(ex_event&& from) {
 		assert(this != &from);
 
-		if(iName == EV_SOCK_ERROR)
-			oSocketError.~sock_err();
+		if(iName == EV_SOCK_ERROR) {
+		    oSocketError.~sock_err();
+		}
 
 		iName = from.iName;
 		iPoolId = from.iPoolId;
 
-		switch(iName)
-		{
+		switch(iName) {
 		case EV_SOCK_ERROR:
 			new (&oSocketError) sock_err();
 			oSocketError = std::move(from.oSocketError);
@@ -172,15 +167,13 @@ struct ex_event
 
 #include <chrono>
 //Get steady_clock timestamp - misc helper function
-inline size_t get_timestamp()
-{
+inline size_t get_timestamp() {
 	using namespace std::chrono;
 	return time_point_cast<seconds>(steady_clock::now()).time_since_epoch().count();
 };
 
 //Get millisecond timestamp
-inline size_t get_timestamp_ms()
-{
+inline size_t get_timestamp_ms() {
 	using namespace std::chrono;
 	if(high_resolution_clock::is_steady)
 		return time_point_cast<milliseconds>(high_resolution_clock::now()).time_since_epoch().count();

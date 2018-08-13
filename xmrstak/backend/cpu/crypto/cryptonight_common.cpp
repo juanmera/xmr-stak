@@ -172,19 +172,13 @@ BOOL AddLargePageRights()
 }
 #endif
 
-size_t cryptonight_init(size_t use_fast_mem, size_t use_mlock, alloc_msg* msg)
-{
+size_t cryptonight_init(alloc_msg* msg) {
 #ifdef _WIN32
-	if(use_fast_mem == 0)
-		return 1;
-
-	if(AddPrivilege(TEXT("SeLockMemoryPrivilege")) == 0)
-	{
-		printer::inst()->print_msg(L0, "Elevating because we need to set up fast memory privileges.");
+	if(AddPrivilege(TEXT("SeLockMemoryPrivilege")) == 0) {
+		Printer::inst()->print_msg(L0, "Elevating because we need to set up fast memory privileges.");
 		RequestElevation();
 
-		if(AddLargePageRights())
-		{
+		if(AddLargePageRights()) {
 			msg->warning = "Added SeLockMemoryPrivilege to the current account. You need to reboot for it to work";
 			bRebootDesirable = TRUE;
 		}
@@ -201,44 +195,31 @@ size_t cryptonight_init(size_t use_fast_mem, size_t use_mlock, alloc_msg* msg)
 #endif // _WIN32
 }
 
-cryptonight_ctx* cryptonight_alloc_ctx(size_t use_fast_mem, size_t use_mlock, alloc_msg* msg)
-{
+cryptonight_ctx *cryptonight_alloc_ctx(alloc_msg *msg) {
 	size_t hashMemSize = std::max(
-		cn_select_memory(::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgo()),
-		cn_select_memory(::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgoRoot())
+		cn_select_memory(::jconf::inst()->GetCurrentCoinSelection().GetDescription().GetMiningAlgo()),
+		cn_select_memory(::jconf::inst()->GetCurrentCoinSelection().GetDescription().GetMiningAlgoRoot())
 	);
 
 	cryptonight_ctx* ptr = (cryptonight_ctx*)_mm_malloc(sizeof(cryptonight_ctx), 4096);
-
-	if(use_fast_mem == 0)
-	{
-		// use 2MiB aligned memory
-		ptr->long_state = (uint8_t*)_mm_malloc(hashMemSize, hashMemSize);
-		ptr->ctx_info[0] = 0;
-		ptr->ctx_info[1] = 0;
-		return ptr;
-	}
-
 #ifdef _WIN32
 	SIZE_T iLargePageMin = GetLargePageMinimum();
 
-	if(hashMemSize > iLargePageMin)
-		iLargePageMin *= 2;
+	if(hashMemSize > iLargePageMin) {
+	    iLargePageMin *= 2;
+	}
 
 	ptr->long_state = (uint8_t*)VirtualAlloc(NULL, iLargePageMin,
 		MEM_COMMIT | MEM_RESERVE | MEM_LARGE_PAGES, PAGE_READWRITE);
 
-	if(ptr->long_state == NULL)
-	{
+	if(ptr->long_state == NULL) {
 		_mm_free(ptr);
 		if(bRebootDesirable)
 			msg->warning = "VirtualAlloc failed. Reboot might help.";
 		else
 			msg->warning = "VirtualAlloc failed.";
 		return NULL;
-	}
-	else
-	{
+	} else {
 		ptr->ctx_info[0] = 1;
 		return ptr;
 	}
@@ -271,24 +252,23 @@ cryptonight_ctx* cryptonight_alloc_ctx(size_t use_fast_mem, size_t use_mlock, al
 		msg->warning = "madvise failed";
 
 	ptr->ctx_info[1] = 0;
-	if(use_mlock != 0 && mlock(ptr->long_state, hashMemSize) != 0)
+	if(mlock(ptr->long_state, hashMemSize) != 0) {
 		msg->warning = "mlock failed";
-	else
+	} else {
 		ptr->ctx_info[1] = 1;
+	}
 
 	return ptr;
 #endif // _WIN32
 }
 
-void cryptonight_free_ctx(cryptonight_ctx* ctx)
-{
+void cryptonight_free_ctx(cryptonight_ctx* ctx) {
 	size_t hashMemSize = std::max(
-		cn_select_memory(::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgo()),
-		cn_select_memory(::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgoRoot())
+		cn_select_memory(::jconf::inst()->GetCurrentCoinSelection().GetDescription().GetMiningAlgo()),
+		cn_select_memory(::jconf::inst()->GetCurrentCoinSelection().GetDescription().GetMiningAlgoRoot())
 	);
 
-	if(ctx->ctx_info[0] != 0)
-	{
+	if(ctx->ctx_info[0] != 0) {
 #ifdef _WIN32
 		VirtualFree(ctx->long_state, 0, MEM_RELEASE);
 #else

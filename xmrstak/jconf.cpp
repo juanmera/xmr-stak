@@ -84,37 +84,36 @@ configVal oConfigValues[] = {
 constexpr size_t iConfigCnt = (sizeof(oConfigValues)/sizeof(oConfigValues[0]));
 
 xmrstak::coin_selection coins[] = {
-	// name, userpool, devpool, default_pool_suggestion
-	{ "aeon7",               {cryptonight_aeon, cryptonight_lite, 7u},     {cryptonight_aeon, cryptonight_lite, 7u},     "mine.aeon-pool.com:5555" },
-	{ "bbscoin",             {cryptonight_monero, cryptonight, 3u},        {cryptonight_monero, cryptonight_monero, 0u}, nullptr },
-	{ "croat",               {cryptonight_monero, cryptonight, 255u},      {cryptonight_monero, cryptonight_monero, 0u}, nullptr },
-	{ "cryptonight",         {cryptonight_monero, cryptonight, 255u},      {cryptonight_monero, cryptonight_monero, 0u}, nullptr },
-	{ "cryptonight_masari",  {cryptonight_monero, cryptonight_masari, 255u}, {cryptonight_monero, cryptonight_monero, 0u},nullptr },
-	{ "cryptonight_haven",   {cryptonight_heavy, cryptonight_haven, 255u}, {cryptonight_heavy, cryptonight_heavy, 0u},   nullptr },
-	{ "cryptonight_heavy",   {cryptonight_heavy, cryptonight_heavy, 0u},   {cryptonight_heavy, cryptonight_heavy, 0u},   nullptr },
-	{ "cryptonight_lite",    {cryptonight_aeon, cryptonight_lite, 255u},   {cryptonight_aeon, cryptonight_lite, 7u},     nullptr },
-	{ "cryptonight_lite_v7", {cryptonight_lite, cryptonight_aeon, 255u},   {cryptonight_aeon, cryptonight_lite, 7u},     nullptr },
-	{ "cryptonight_lite_v7_xor", {cryptonight_aeon, cryptonight_ipbc, 255u}, {cryptonight_aeon, cryptonight_aeon, 255u}, nullptr },
-	{ "cryptonight_v7",      {cryptonight_monero, cryptonight_monero, 0u}, {cryptonight_monero, cryptonight_monero, 0u}, nullptr },
-	{ "cryptonight_v7_stellite", {cryptonight_monero, cryptonight_stellite, 255u}, {cryptonight_monero, cryptonight_monero, 255u}, nullptr },
-	{ "edollar",             {cryptonight_monero, cryptonight, 255u},      {cryptonight_monero, cryptonight_monero, 0u}, nullptr },
-	{ "electroneum",         {cryptonight_monero, cryptonight, 255u},      {cryptonight_monero, cryptonight_monero, 0u}, nullptr },
-	{ "graft",               {cryptonight_monero, cryptonight, 8u},        {cryptonight_monero, cryptonight_monero, 0u}, nullptr },
-	{ "haven",               {cryptonight_haven, cryptonight_heavy, 3u},   {cryptonight_heavy, cryptonight_heavy, 0u},   nullptr },
-	{ "intense",             {cryptonight_monero, cryptonight, 4u},        {cryptonight_monero, cryptonight_monero, 0u}, nullptr },
-	{ "ipbc",                {cryptonight_aeon, cryptonight_ipbc, 255u},   {cryptonight_aeon, cryptonight_aeon, 255u},     nullptr },
-	{ "karbo",               {cryptonight_monero, cryptonight, 255u},      {cryptonight_monero, cryptonight_monero, 0u}, nullptr },
-	{ "masari",              {cryptonight_masari, cryptonight_monero, 7u},   {cryptonight_monero, cryptonight_monero, 0u},nullptr },
-	{ "monero7",             {cryptonight_monero, cryptonight_monero, 0u}, {cryptonight_monero, cryptonight_monero, 0u}, "pool.usxmrpool.com:3333" },
-	{ "stellite",            {cryptonight_stellite, cryptonight_monero, 4u}, {cryptonight_monero, cryptonight_monero, 0u}, nullptr },
-	{ "sumokoin",            {cryptonight_heavy, cryptonight_heavy, 0u},   {cryptonight_heavy, cryptonight_heavy, 0u},   nullptr },
-	{ "turtlecoin",          {cryptonight_lite, cryptonight_aeon, 255u},   {cryptonight_aeon, cryptonight_lite, 7u},     nullptr }
+	// name, userpool, devpool
+	{ "aeon7",               {cryptonight_aeon, cryptonight_lite, 7u},     {cryptonight_aeon, cryptonight_lite, 7u}},
+	{ "bbscoin",             {cryptonight_monero, cryptonight, 3u},        {cryptonight_monero, cryptonight_monero, 0u}},
+	{ "croat",               {cryptonight_monero, cryptonight, 255u},      {cryptonight_monero, cryptonight_monero, 0u}},
+	{ "cryptonight",         {cryptonight_monero, cryptonight, 255u},      {cryptonight_monero, cryptonight_monero, 0u}},
+	{ "cryptonight_masari",  {cryptonight_monero, cryptonight_masari, 255u}, {cryptonight_monero, cryptonight_monero, 0u}},
+	{ "cryptonight_haven",   {cryptonight_heavy, cryptonight_haven, 255u}, {cryptonight_heavy, cryptonight_heavy, 0u}},
+	{ "cryptonight_heavy",   {cryptonight_heavy, cryptonight_heavy, 0u},   {cryptonight_heavy, cryptonight_heavy, 0u}},
+	{ "cryptonight_lite",    {cryptonight_aeon, cryptonight_lite, 255u},   {cryptonight_aeon, cryptonight_lite, 7u}},
+	{ "cryptonight_lite_v7", {cryptonight_lite, cryptonight_aeon, 255u},   {cryptonight_aeon, cryptonight_lite, 7u}},
+	{ "cryptonight_lite_v7_xor", {cryptonight_aeon, cryptonight_ipbc, 255u}, {cryptonight_aeon, cryptonight_aeon, 255u}},
+	{ "cryptonight_v7",      {cryptonight_monero, cryptonight_monero, 0u}, {cryptonight_monero, cryptonight_monero, 0u}},
+	{ "cryptonight_v7_stellite", {cryptonight_monero, cryptonight_stellite, 255u}, {cryptonight_monero, cryptonight_monero, 255u}},
+	{ "edollar",             {cryptonight_monero, cryptonight, 255u},      {cryptonight_monero, cryptonight_monero, 0u}},
+	{ "electroneum",         {cryptonight_monero, cryptonight, 255u},      {cryptonight_monero, cryptonight_monero, 0u}},
+	{ "graft",               {cryptonight_monero, cryptonight, 8u},        {cryptonight_monero, cryptonight_monero, 0u}},
+	{ "haven",               {cryptonight_haven, cryptonight_heavy, 3u},   {cryptonight_heavy, cryptonight_heavy, 0u}},
+	{ "intense",             {cryptonight_monero, cryptonight, 4u},        {cryptonight_monero, cryptonight_monero, 0u}},
+	{ "ipbc",                {cryptonight_aeon, cryptonight_ipbc, 255u},   {cryptonight_aeon, cryptonight_aeon, 255u}},
+	{ "karbo",               {cryptonight_monero, cryptonight, 255u},      {cryptonight_monero, cryptonight_monero, 0u}},
+	{ "masari",              {cryptonight_masari, cryptonight_monero, 7u},   {cryptonight_monero, cryptonight_monero, 0u}},
+	{ "monero7",             {cryptonight_monero, cryptonight_monero, 0u}, {cryptonight_monero, cryptonight_monero, 0u}},
+	{ "stellite",            {cryptonight_stellite, cryptonight_monero, 4u}, {cryptonight_monero, cryptonight_monero, 0u}},
+	{ "sumokoin",            {cryptonight_heavy, cryptonight_heavy, 0u},   {cryptonight_heavy, cryptonight_heavy, 0u}},
+	{ "turtlecoin",          {cryptonight_lite, cryptonight_aeon, 255u},   {cryptonight_aeon, cryptonight_lite, 7u}}
 };
 
 constexpr size_t coin_algo_size = (sizeof(coins)/sizeof(coins[0]));
 
-inline bool checkType(Type have, Type want)
-{
+inline bool checkType(Type have, Type want) {
 	if(want == have)
 		return true;
 	else if(want == kNullType)
@@ -268,8 +267,7 @@ bool jconf::check_cpu_features()
 	return bHaveSse2;
 }
 
-jconf::slow_mem_cfg jconf::GetSlowMemSetting()
-{
+jconf::slow_mem_cfg jconf::GetSlowMemSetting() {
 	const char* opt = prv->configValues[sUseSlowMem]->GetString();
 
 	if(strcasecmp(opt, "always") == 0)
@@ -309,7 +307,7 @@ bool jconf::IsOnAlgoList(std::string& needle)
 
 	if(needle == "monero")
 	{
-		printer::inst()->print_msg(L0, "You entered Monero as coin name. Monero will hard-fork the PoW.\nThis means it will stop being compatible with other cryptonight coins.\n"
+		Printer::inst()->print_msg(L0, "You entered Monero as coin name. Monero will hard-fork the PoW.\nThis means it will stop being compatible with other cryptonight coins.\n"
 			"Please use 'monero7' (support auto switch to new POW) if you want to mine Monero, \nor name the coin that you want to mine.");
 		return false;
 	}
@@ -322,24 +320,6 @@ bool jconf::IsOnAlgoList(std::string& needle)
 	return false;
 }
 
-const char* jconf::GetDefaultPool(const char* needle)
-{
-	const char* default_example = "pool.example.com:3333";
-
-	for(size_t i=0; i < coin_algo_size; i++)
-	{
-		if(strcmp(needle, coins[i].coin_name) == 0)
-		{
-			if(coins[i].default_pool != nullptr)
-				return coins[i].default_pool;
-			else
-				return default_example;
-		}
-	}
-
-	return default_example;
-}
-
 bool jconf::parse_file(const char* sFilename, bool main_conf)
 {
 	FILE * pFile;
@@ -349,7 +329,7 @@ bool jconf::parse_file(const char* sFilename, bool main_conf)
 	pFile = fopen(sFilename, "rb");
 	if (pFile == NULL)
 	{
-		printer::inst()->print_msg(L0, "Failed to open config file %s.", sFilename);
+		Printer::inst()->print_msg(L0, "Failed to open config file %s.", sFilename);
 		return false;
 	}
 
@@ -360,14 +340,14 @@ bool jconf::parse_file(const char* sFilename, bool main_conf)
 	if(flen >= 64*1024)
 	{
 		fclose(pFile);
-		printer::inst()->print_msg(L0, "Oversized config file - %s.", sFilename);
+		Printer::inst()->print_msg(L0, "Oversized config file - %s.", sFilename);
 		return false;
 	}
 
 	if(flen <= 16)
 	{
 		fclose(pFile);
-		printer::inst()->print_msg(L0, "File is empty or too short - %s.", sFilename);
+		Printer::inst()->print_msg(L0, "File is empty or too short - %s.", sFilename);
 		return false;
 	}
 
@@ -376,7 +356,7 @@ bool jconf::parse_file(const char* sFilename, bool main_conf)
 	{
 		free(buffer);
 		fclose(pFile);
-		printer::inst()->print_msg(L0, "Read error while reading %s.", sFilename);
+		Printer::inst()->print_msg(L0, "Read error while reading %s.", sFilename);
 		return false;
 	}
 	fclose(pFile);
@@ -401,14 +381,14 @@ bool jconf::parse_file(const char* sFilename, bool main_conf)
 
 	if(root.HasParseError())
 	{
-		printer::inst()->print_msg(L0, "JSON config parse error in '%s' (offset %llu): %s",
+		Printer::inst()->print_msg(L0, "JSON config parse error in '%s' (offset %llu): %s",
 			sFilename, int_port(root.GetErrorOffset()), GetParseError_En(root.GetParseError()));
 		return false;
 	}
 
 	if(!root.IsObject())
 	{ //This should never happen as we created the root ourselves
-		printer::inst()->print_msg(L0, "Invalid config file '%s'. No root?", sFilename);
+		Printer::inst()->print_msg(L0, "Invalid config file '%s'. No root?", sFilename);
 		return false;
 	}
 
@@ -418,7 +398,7 @@ bool jconf::parse_file(const char* sFilename, bool main_conf)
 		{
 			if(oConfigValues[i].iName != i)
 			{
-				printer::inst()->print_msg(L0, "Code error. oConfigValues are not in order.");
+				Printer::inst()->print_msg(L0, "Code error. oConfigValues are not in order.");
 				return false;
 			}
 
@@ -426,13 +406,13 @@ bool jconf::parse_file(const char* sFilename, bool main_conf)
 
 			if(prv->configValues[i] == nullptr)
 			{
-				printer::inst()->print_msg(L0, "Invalid config file '%s'. Missing value \"%s\".", sFilename, oConfigValues[i].sName);
+				Printer::inst()->print_msg(L0, "Invalid config file '%s'. Missing value \"%s\".", sFilename, oConfigValues[i].sName);
 				return false;
 			}
 
 			if(!checkType(prv->configValues[i]->GetType(), oConfigValues[i].iType))
 			{
-				printer::inst()->print_msg(L0, "Invalid config file '%s'. Value \"%s\" has unexpected type.", sFilename, oConfigValues[i].sName);
+				Printer::inst()->print_msg(L0, "Invalid config file '%s'. Value \"%s\" has unexpected type.", sFilename, oConfigValues[i].sName);
 				return false;
 			}
 		}
@@ -443,7 +423,7 @@ bool jconf::parse_file(const char* sFilename, bool main_conf)
 		{
 			if(oConfigValues[i].iName != i)
 			{
-				printer::inst()->print_msg(L0, "Code error. oConfigValues are not in order.");
+				Printer::inst()->print_msg(L0, "Code error. oConfigValues are not in order.");
 				return false;
 			}
 
@@ -451,13 +431,13 @@ bool jconf::parse_file(const char* sFilename, bool main_conf)
 
 			if(prv->configValues[i] == nullptr)
 			{
-				printer::inst()->print_msg(L0, "Invalid config file '%s'. Missing value \"%s\".", sFilename, oConfigValues[i].sName);
+				Printer::inst()->print_msg(L0, "Invalid config file '%s'. Missing value \"%s\".", sFilename, oConfigValues[i].sName);
 				return false;
 			}
 
 			if(!checkType(prv->configValues[i]->GetType(), oConfigValues[i].iType))
 			{
-				printer::inst()->print_msg(L0, "Invalid config file '%s'. Value \"%s\" has unexpected type.", sFilename, oConfigValues[i].sName);
+				Printer::inst()->print_msg(L0, "Invalid config file '%s'. Value \"%s\" has unexpected type.", sFilename, oConfigValues[i].sName);
 				return false;
 			}
 		}
@@ -470,7 +450,7 @@ bool jconf::parse_config(const char* sFilename, const char* sFilenamePools)
 {
 	if(!check_cpu_features())
 	{
-		printer::inst()->print_msg(L0, "CPU support of SSE2 is required.");
+		Printer::inst()->print_msg(L0, "CPU support of SSE2 is required.");
 		return false;
 	}
 
@@ -483,7 +463,7 @@ bool jconf::parse_config(const char* sFilename, const char* sFilenamePools)
 	size_t pool_cnt = prv->configValues[aPoolList]->Size();
 	if(pool_cnt == 0)
 	{
-		printer::inst()->print_msg(L0, "Invalid config file. pool_list must not be empty.");
+		Printer::inst()->print_msg(L0, "Invalid config file. pool_list must not be empty.");
 		return false;
 	}
 
@@ -500,7 +480,7 @@ bool jconf::parse_config(const char* sFilename, const char* sFilenamePools)
 
 		if(!oThdConf.IsObject())
 		{
-			printer::inst()->print_msg(L0, "Invalid config file. pool_list must contain objects.");
+			Printer::inst()->print_msg(L0, "Invalid config file. pool_list must contain objects.");
 			return false;
 		}
 
@@ -509,13 +489,13 @@ bool jconf::parse_config(const char* sFilename, const char* sFilenamePools)
 			const Value* v;
 			if((v = GetObjectMember(oThdConf, aPoolValues[j])) == nullptr)
 			{
-				printer::inst()->print_msg(L0, "Invalid config file. Pool %u does not have the value %s.", i, aPoolValues[j]);
+				Printer::inst()->print_msg(L0, "Invalid config file. Pool %u does not have the value %s.", i, aPoolValues[j]);
 				return false;
 			}
 
 			if(!checkType(v->GetType(), poolValTypes[j]))
 			{
-				printer::inst()->print_msg(L0, "Invalid config file. Value %s for pool %u has unexpected type.", aPoolValues[j], i);
+				Printer::inst()->print_msg(L0, "Invalid config file. Value %s for pool %u has unexpected type.", aPoolValues[j], i);
 				return false;
 			}
 		}
@@ -524,7 +504,7 @@ bool jconf::parse_config(const char* sFilename, const char* sFilenamePools)
 		size_t wt;
 		if(!jwt->IsUint64() || (wt = jwt->GetUint64()) == 0)
 		{
-			printer::inst()->print_msg(L0, "Invalid pool list for pool %u. Pool weight needs to be an integer larger than zero.", i);
+			Printer::inst()->print_msg(L0, "Invalid pool list for pool %u. Pool weight needs to be an integer larger than zero.", i);
 			return false;
 		}
 
@@ -538,21 +518,21 @@ bool jconf::parse_config(const char* sFilename, const char* sFilenamePools)
 		!prv->configValues[iNetRetry]->IsUint64() ||
 		!prv->configValues[iGiveUpLimit]->IsUint64())
 	{
-		printer::inst()->print_msg(L0,
+		Printer::inst()->print_msg(L0,
 			"Invalid config file. call_timeout, retry_time and giveup_limit need to be positive integers.");
 		return false;
 	}
 
 	if(prv->configValues[iCallTimeout]->GetUint64() < 2 || prv->configValues[iNetRetry]->GetUint64() < 2)
 	{
-		printer::inst()->print_msg(L0,
+		Printer::inst()->print_msg(L0,
 			"Invalid config file. call_timeout and retry_time need to be larger than 1 second.");
 		return false;
 	}
 
 	if(!prv->configValues[iVerboseLevel]->IsUint64() || !prv->configValues[iAutohashTime]->IsUint64())
 	{
-		printer::inst()->print_msg(L0,
+		Printer::inst()->print_msg(L0,
 			"Invalid config file. verbose_level and h_print_time need to be positive integers.");
 		return false;
 	}
@@ -561,13 +541,13 @@ bool jconf::parse_config(const char* sFilename, const char* sFilenamePools)
 		bHaveAes = prv->configValues[bAesOverride]->GetBool();
 
 	if(!bHaveAes)
-		printer::inst()->print_msg(L0, "Your CPU doesn't support hardware AES. Don't expect high hashrates.");
+		Printer::inst()->print_msg(L0, "Your CPU doesn't support hardware AES. Don't expect high hashrates.");
 
-	printer::inst()->set_verbose_level(prv->configValues[iVerboseLevel]->GetUint64());
+	Printer::inst()->set_verbose_level(prv->configValues[iVerboseLevel]->GetUint64());
 
 	if(GetSlowMemSetting() == unknown_value)
 	{
-		printer::inst()->print_msg(L0,
+		Printer::inst()->print_msg(L0,
 			"Invalid config file. use_slow_memory must be \"always\", \"no_mlck\", \"warn\" or \"never\"");
 		return false;
 	}
@@ -575,7 +555,7 @@ bool jconf::parse_config(const char* sFilename, const char* sFilenamePools)
 #ifdef _WIN32
 	if(GetSlowMemSetting() == no_mlck)
 	{
-		printer::inst()->print_msg(L0, "On Windows large pages need mlock. Please use another option.");
+		Printer::inst()->print_msg(L0, "On Windows large pages need mlock. Please use another option.");
 		return false;
 	}
 #endif // _WIN32
@@ -583,10 +563,10 @@ bool jconf::parse_config(const char* sFilename, const char* sFilenamePools)
 	if (prv->configValues[bFlushStdout]->IsBool())
 	{
 		bool bflush = prv->configValues[bFlushStdout]->GetBool();
-		printer::inst()->set_flush_stdout(bflush);
+		Printer::inst()->set_flush_stdout(bflush);
 		if (bflush)
 		{
-			printer::inst()->print_msg(L0, "Flush stdout forced.");
+			Printer::inst()->print_msg(L0, "Flush stdout forced.");
 		}
 	}
 
@@ -595,7 +575,7 @@ bool jconf::parse_config(const char* sFilename, const char* sFilenamePools)
 
 	if(ctmp.length() == 0)
 	{
-		printer::inst()->print_msg(L0, "You need to specify the coin that you want to mine.");
+		Printer::inst()->print_msg(L0, "You need to specify the coin that you want to mine.");
 		return false;
 	}
 
@@ -603,7 +583,7 @@ bool jconf::parse_config(const char* sFilename, const char* sFilenamePools)
 	{
 		if(ctmp == "monero")
 		{
-			printer::inst()->print_msg(L0, "You entered Monero as coin name. Monero will hard-fork the PoW.\nThis means it will stop being compatible with other cryptonight coins.\n"
+			Printer::inst()->print_msg(L0, "You entered Monero as coin name. Monero will hard-fork the PoW.\nThis means it will stop being compatible with other cryptonight coins.\n"
 				"Please use monero7 (support auto switch to new POW) if you want to mine Monero, or name the coin that you want to mine.");
 			return false;
 		}
@@ -615,11 +595,11 @@ bool jconf::parse_config(const char* sFilename, const char* sFilenamePools)
 		}
 	}
 
-	if(currentCoin.GetDescription(1).GetMiningAlgo() == invalid_algo)
+	if(currentCoin.GetDescription().GetMiningAlgo() == invalid_algo)
 	{
 		std::string cl;
 		GetAlgoList(cl);
-		printer::inst()->print_msg(L0, "Unrecognised coin '%s', your options are:\n%s", ctmp.c_str(), cl.c_str());
+		Printer::inst()->print_msg(L0, "Unrecognised coin '%s', your options are:\n%s", ctmp.c_str(), cl.c_str());
 		return false;
 	}
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "xmrstak/backend/globalStates.hpp"
+#include "xmrstak/backend/GlobalStates.hpp"
 
 #include <atomic>
 #include <cstdint>
@@ -19,7 +19,7 @@ namespace xmrstak
 	struct iBackend
 	{
 
-		enum BackendType : uint32_t { UNKNOWN = 0u, CPU = 1u, AMD = 2u, NVIDIA = 3u };
+		enum BackendType : uint32_t { UNKNOWN = 0u, CPU = 1u, AMD = 2u };
 
 		static const char* getName(const BackendType type)
 		{
@@ -27,7 +27,6 @@ namespace xmrstak
 				"unknown",
 				"cpu",
 				"amd",
-				"nvidia"
 			};
 
 			uint32_t i = static_cast<uint32_t>(type);

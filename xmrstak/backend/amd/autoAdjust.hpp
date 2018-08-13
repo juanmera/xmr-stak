@@ -50,7 +50,7 @@ public:
 
 		if(platformIndex == -1)
 		{
-			printer::inst()->print_msg(L0,"WARNING: No AMD OpenCL platform found. Possible driver issues or wrong vendor driver.");
+			Printer::inst()->print_msg(L0,"WARNING: No AMD OpenCL platform found. Possible driver issues or wrong vendor driver.");
 			return false;
 		}
 
@@ -61,7 +61,7 @@ public:
 
 		if(deviceCount == 0)
 		{
-			printer::inst()->print_msg(L0,"WARNING: No AMD device found.");
+			Printer::inst()->print_msg(L0,"WARNING: No AMD device found.");
 			return false;
 		}
 
@@ -84,8 +84,8 @@ private:
 		constexpr size_t byteToMiB = 1024u * 1024u;
 
 		size_t hashMemSize = std::max(
-			cn_select_memory(::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgo()),
-			cn_select_memory(::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgoRoot())
+			cn_select_memory(::jconf::inst()->GetCurrentCoinSelection().GetDescription().GetMiningAlgo()),
+			cn_select_memory(::jconf::inst()->GetCurrentCoinSelection().GetDescription().GetMiningAlgoRoot())
 		);
 
 		std::string conf;
@@ -114,21 +114,8 @@ private:
 				maxThreads = 2024u;
 			}
 
-			// NVIDIA optimizations
-			if(
-				ctx.isNVIDIA && (
-					ctx.name.find("P100") != std::string::npos ||
-				    ctx.name.find("V100") != std::string::npos
-				)
-			)
-			{
-				// do not limit the number of threads
-				maxThreads = 40000u;
-				minFreeMem = 512u * byteToMiB;
-			}
-
 			// increase all intensity limits by two for aeon
-			if(::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgo() == cryptonight_lite)
+			if(::jconf::inst()->GetCurrentCoinSelection().GetDescription().GetMiningAlgo() == cryptonight_lite)
 				maxThreads *= 2u;
 
 			// keep 128MiB memory free (value is randomly chosen)
@@ -142,7 +129,7 @@ private:
 			//If the intensity is 0, then it's because the multiple of the unit count is greater than intensity
 			if (intensity == 0)
 			{
-				printer::inst()->print_msg(L0, "WARNING: Auto detected intensity unexpectedly low. Try to set the environment variable GPU_SINGLE_ALLOC_PERCENT.");
+				Printer::inst()->print_msg(L0, "WARNING: Auto detected intensity unexpectedly low. Try to set the environment variable GPU_SINGLE_ALLOC_PERCENT.");
 				intensity = possibleIntensity;
 
 			}
@@ -153,13 +140,13 @@ private:
 				// set 8 threads per block (this is a good value for the most gpus)
 				conf += std::string("  { \"index\" : ") + std::to_string(ctx.deviceIdx) + ",\n" +
 					"    \"intensity\" : " + std::to_string(intensity) + ", \"worksize\" : " + std::to_string(8) + ",\n" +
-					"    \"strided_index\" : " + (ctx.isNVIDIA ? "0" : "1") + ", \"mem_chunk\" : 2,\n"
+					"    \"strided_index\" : 1, \"mem_chunk\" : 2,\n"
 					"    \"comp_mode\" : true\n" +
 					"  },\n";
 			}
 			else
 			{
-				printer::inst()->print_msg(L0, "WARNING: Ignore gpu %s, %s MiB free memory is not enough to suggest settings.", ctx.name.c_str(), std::to_string(availableMem / byteToMiB).c_str());
+				Printer::inst()->print_msg(L0, "WARNING: Ignore gpu %s, %s MiB free memory is not enough to suggest settings.", ctx.name.c_str(), std::to_string(availableMem / byteToMiB).c_str());
 			}
 		}
 
@@ -168,7 +155,7 @@ private:
 		configTpl.write(params::inst().configFileAMD);
 
 		const std::string backendName = xmrstak::params::inst().openCLVendor;
-		printer::inst()->print_msg(L0, "%s: GPU (OpenCL) configuration stored in file '%s'", backendName.c_str(), params::inst().configFileAMD.c_str());
+		Printer::inst()->print_msg(L0, "%s: GPU (OpenCL) configuration stored in file '%s'", backendName.c_str(), params::inst().configFileAMD.c_str());
 	}
 
 	std::vector<GpuContext> devVec;

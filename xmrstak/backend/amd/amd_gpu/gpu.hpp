@@ -9,7 +9,7 @@
 #include <CL/cl.h>
 #endif
 
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -27,7 +27,6 @@ struct GpuContext
 	size_t workSize;
 	int stridedIndex;
 	int memChunk;
-	bool isNVIDIA = false;
 	int compMode;
 
 	/*Output vars*/

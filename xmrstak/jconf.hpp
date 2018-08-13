@@ -1,18 +1,16 @@
 #pragma once
 
-#include "xmrstak/misc/environment.hpp"
+#include "xmrstak/misc/Environment.hpp"
 #include "xmrstak/misc/coinDescription.hpp"
 #include "params.hpp"
 
 #include <stdlib.h>
 #include <string>
 
-class jconf
-{
+class jconf {
 public:
-	static jconf* inst()
-	{
-		auto& env = xmrstak::environment::inst();
+	static jconf* inst() {
+		auto& env = xmrstak::Environment::inst();
 		if(env.pJconfConfig == nullptr)
 			env.pJconfConfig = new jconf;
 		return env.pJconfConfig;
@@ -54,7 +52,6 @@ public:
 
 	static void GetAlgoList(std::string& list);
 	static bool IsOnAlgoList(std::string& needle);
-	static const char* GetDefaultPool(const char* needle);
 
 	uint64_t GetVerboseLevel();
 	bool PrintMotd();
@@ -69,8 +66,6 @@ public:
 	bool DaemonMode();
 
 	bool PreferIpv4();
-
-	inline bool HaveHardwareAes() { return bHaveAes; }
 
 	static void cpuid(uint32_t eax, int32_t ecx, int32_t val[4]);
 

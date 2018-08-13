@@ -1,6 +1,6 @@
 #pragma once
 
-#include "xmrstak/misc/environment.hpp"
+#include "xmrstak/misc/Environment.hpp"
 #include "xmrstak/params.hpp"
 
 #include <thread>
@@ -21,14 +21,11 @@
 #	include <iostream>
 #endif
 
-namespace xmrstak
-{
+namespace xmrstak {
 
-struct plugin
-{
+struct plugin {
 
-	plugin(const std::string backendName, const std::string libName) : fn_startBackend(nullptr), m_backendName(backendName)
-	{
+	plugin(const std::string backendName, const std::string libName) : fn_startBackend(nullptr), m_backendName(backendName) {
 #ifdef WIN32
 		libBackend = LoadLibrary(TEXT((libName + ".dll").c_str()));
 		if(!libBackend)
@@ -46,13 +43,14 @@ struct plugin
 		// search library in working directory
 		libBackend = dlopen(("./lib" + libName + fileExtension).c_str(), RTLD_LAZY);
 		// fallback to binary directory
-		if(!libBackend)
+		if(!libBackend) {
 			libBackend = dlopen((params::inst().executablePrefix + "lib" + libName + fileExtension).c_str(), RTLD_LAZY);
+		}
 		// try use LD_LIBRARY_PATH
-		if(!libBackend)
+		if(!libBackend) {
 			libBackend = dlopen(("lib" + libName + fileExtension).c_str(), RTLD_LAZY);
-		if(!libBackend)
-		{
+		}
+		if(!libBackend) {
 			std::cerr << "WARNING: "<< m_backendName <<" cannot load backend library: " << dlerror() << std::endl;
 			return;
 		}
@@ -69,17 +67,14 @@ struct plugin
 		dlerror();
 		fn_startBackend = (startBackend_t) dlsym(libBackend, "xmrstak_start_backend");
 		const char* dlsym_error = dlerror();
-		if(dlsym_error)
-		{
+		if(dlsym_error) {
 			std::cerr << "WARNING: backend plugin " << libName << " contains no entry 'xmrstak_start_backend': " << dlsym_error << std::endl;
 		}
 #endif
 	}
 
-	std::vector<iBackend*>* startBackend(uint32_t threadOffset, miner_work& pWork, environment& env)
-	{
-		if(fn_startBackend == nullptr)
-		{
+	std::vector<iBackend*>* startBackend(uint32_t threadOffset, miner_work& pWork, Environment& env) {
+		if(fn_startBackend == nullptr) {
 			std::vector<iBackend*>* pvThreads = new std::vector<iBackend*>();
 			std::cerr << "WARNING: " << m_backendName << " Backend disabled"<< std::endl;
 			return pvThreads;
@@ -88,11 +83,10 @@ struct plugin
 		return fn_startBackend(threadOffset, pWork, env);
 	}
 
-	std::string m_backendName;
-
-	typedef std::vector<iBackend*>* (*startBackend_t)(uint32_t threadOffset, miner_work& pWork, environment& env);
+	typedef std::vector<iBackend*>* (*startBackend_t)(uint32_t threadOffset, miner_work& pWork, Environment& env);
 
 	startBackend_t fn_startBackend;
+	std::string m_backendName;
 
 #ifdef WIN32
 	HINSTANCE libBackend;

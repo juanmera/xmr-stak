@@ -13,7 +13,7 @@ Config files will be created at the first start.
 The number of files depends on the available backends.
 `config.txt` contains the common miner settings.
 `pools.txt` contains the selected mining pools and currency to mine.
-`amd.txt`, `cpu.txt` and `nvidia.txt` contains miner backend specific settings and can be used for further tuning ([Tuning Guide](tuning.md)).
+`amd.txt` contains miner backend specific settings and can be used for further tuning ([Tuning Guide](tuning.md)).
 
 Note: If the pool is ignoring the option `rig_id` in `pools.txt` to name your worker please check the pool documentation how a worker name can be set.
 

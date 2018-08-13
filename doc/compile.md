@@ -5,7 +5,6 @@
 * [Generic Build Options](#generic-build-options)
 * [CPU Build Options](#cpu-build-options)
 * [AMD Build Options](#amd-build-options)
-* [NVIDIA Build Options](#nvidia-build-options)
 * [Compile on Windows](compile_Windows.md)
 * [Compile on Linux](compile_Linux.md)
 * [Compile on FreeBSD](compile_FreeBSD.md)

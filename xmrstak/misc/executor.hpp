@@ -3,8 +3,9 @@
 #include "thdq.hpp"
 #include "telemetry.hpp"
 #include "xmrstak/backend/iBackend.hpp"
-#include "xmrstak/misc/environment.hpp"
+#include "xmrstak/misc/Environment.hpp"
 #include "xmrstak/net/msgstruct.hpp"
+#include "xmrstak/net/jpsock.hpp"
 
 #include <atomic>
 #include <array>
@@ -13,29 +14,16 @@
 #include <future>
 #include <chrono>
 
-class jpsock;
-
-namespace xmrstak
-{
-namespace cpu
-{
-class minethd;
-
-} // namespace cpu
-} // namespace xmrstak
-
-class executor
-{
+class Executor {
 public:
-	static executor* inst()
-	{
-		auto& env = xmrstak::environment::inst();
+	static Executor* inst() {
+		auto& env = xmrstak::Environment::inst();
 		if(env.pExecutor == nullptr)
-			env.pExecutor = new executor;
+			env.pExecutor = new Executor;
 		return env.pExecutor;
 	};
 
-	void ex_start(bool daemon) { daemon ? ex_main() : std::thread(&executor::ex_main, this).detach(); }
+	void ex_start(bool daemon) { daemon ? ex_main() : std::thread(&Executor::ex_main, this).detach(); }
 
 
 	inline void push_event(ex_event&& ev) { oEventQ.push(std::move(ev)); }
@@ -71,7 +59,7 @@ private:
 
 	jpsock* pick_pool_by_id(size_t pool_id);
 
-	executor();
+	Executor() = default;
 
 	void ex_main();
 

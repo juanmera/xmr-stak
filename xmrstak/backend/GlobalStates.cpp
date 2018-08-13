@@ -22,7 +22,7 @@
   */
 
 #include "miner_work.hpp"
-#include "globalStates.hpp"
+#include "GlobalStates.hpp"
 
 #include <assert.h>
 #include <cmath>
@@ -33,7 +33,7 @@
 namespace xmrstak
 {
 
-void globalStates::consume_work( miner_work& threadWork, uint64_t& currentJobId)
+void GlobalStates::consume_work( miner_work& threadWork, uint64_t& currentJobId)
 {
 	jobLock.ReadLock();
 
@@ -43,7 +43,7 @@ void globalStates::consume_work( miner_work& threadWork, uint64_t& currentJobId)
 	jobLock.UnLock();
 }
 
-void globalStates::switch_work(miner_work& pWork, pool_data& dat)
+void GlobalStates::switch_work(miner_work& pWork, pool_data& dat)
 {
 	jobLock.WriteLock();
 

@@ -15,7 +15,7 @@
 	- Parsing or connection error
 	Those are fatal errors (we drop the connection if we encounter them).
 	After they are constructed from const char* strings from various places.
-	(can be from read-only mem), we pass them in an executor message
+	(can be from read-only mem), we pass them in an Executor message
 	once the recv thread expires.
 	- Call error
 	This error happens when the "server says no". Usually because the job was
@@ -25,8 +25,7 @@
 */
 class base_socket;
 
-class jpsock
-{
+class jpsock {
 public:
 	jpsock(size_t id, const char* sAddr, const char* sLogin, const char* sRigId, const char* sPassword, double pool_weight, bool tls, const char* tls_fp, bool nicehash);
 	~jpsock();

@@ -240,36 +240,9 @@ const char* err_to_str(cl_int ret)
 }
 
 #if 0
-void printer::inst()->print_msg(L1,const char* fmt, ...);
-void printer::inst()->print_str(const char* str);
+void Printer::inst()->print_msg(L1,const char* fmt, ...);
+void Printer::inst()->print_str(const char* str);
 #endif
-
-char* LoadTextFile(const char* filename)
-{
-	size_t flen;
-	char* out;
-	FILE* kernel = fopen(filename, "rb");
-
-	if(kernel == NULL)
-		return NULL;
-
-	fseek(kernel, 0, SEEK_END);
-	flen = ftell(kernel);
-	fseek(kernel, 0, SEEK_SET);
-
-	out = (char*)malloc(flen+1);
-	size_t r = fread(out, flen, 1, kernel);
-	fclose(kernel);
-
-	if(r != 1)
-	{
-		free(out);
-		return NULL;
-	}
-
-	out[flen] = '\0';
-	return out;
-}
 
 size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_code)
 {
@@ -278,7 +251,7 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 
 	if((ret = clGetDeviceInfo(ctx->DeviceID, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(size_t), &MaximumWorkSize, NULL)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when querying a device's max worksize using clGetDeviceInfo.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when querying a device's max worksize using clGetDeviceInfo.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
@@ -286,7 +259,7 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 	 * To give the user the correct maximum work size we divide the hardware specific max by 8.
 	 */
 	MaximumWorkSize /= 8;
-	printer::inst()->print_msg(L1,"Device %lu work size %lu / %lu.", ctx->deviceIdx, ctx->workSize, MaximumWorkSize);
+	Printer::inst()->print_msg(L1,"Device %lu work size %lu / %lu.", ctx->deviceIdx, ctx->workSize, MaximumWorkSize);
 #if defined(CL_VERSION_2_0) && !defined(CONF_ENFORCE_OpenCL_1_2)
 	const cl_queue_properties CommandQueueProperties[] = { 0, 0, 0 };
 	ctx->CommandQueues = clCreateCommandQueueWithProperties(opencl_ctx, ctx->DeviceID, CommandQueueProperties, &ret);
@@ -297,34 +270,34 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 
 	if(ret != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clCreateCommandQueueWithProperties.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clCreateCommandQueueWithProperties.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
 	ctx->InputBuffer = clCreateBuffer(opencl_ctx, CL_MEM_READ_ONLY, 88, NULL, &ret);
 	if(ret != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clCreateBuffer to create input buffer.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clCreateBuffer to create input buffer.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
 	size_t scratchPadSize = std::max(
-		cn_select_memory(::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgo()),
-		cn_select_memory(::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgoRoot())
+		cn_select_memory(::jconf::inst()->GetCurrentCoinSelection().GetDescription().GetMiningAlgo()),
+		cn_select_memory(::jconf::inst()->GetCurrentCoinSelection().GetDescription().GetMiningAlgoRoot())
 	);
 
 	size_t g_thd = ctx->rawIntensity;
 	ctx->ExtraBuffers[0] = clCreateBuffer(opencl_ctx, CL_MEM_READ_WRITE, scratchPadSize * g_thd, NULL, &ret);
 	if(ret != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clCreateBuffer to create hash scratchpads buffer.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clCreateBuffer to create hash scratchpads buffer.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
 	ctx->ExtraBuffers[1] = clCreateBuffer(opencl_ctx, CL_MEM_READ_WRITE, 200 * g_thd, NULL, &ret);
 	if(ret != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clCreateBuffer to create hash states buffer.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clCreateBuffer to create hash states buffer.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
@@ -332,7 +305,7 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 	ctx->ExtraBuffers[2] = clCreateBuffer(opencl_ctx, CL_MEM_READ_WRITE, sizeof(cl_uint) * (g_thd + 2), NULL, &ret);
 	if(ret != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clCreateBuffer to create Branch 0 buffer.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clCreateBuffer to create Branch 0 buffer.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
@@ -340,7 +313,7 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 	ctx->ExtraBuffers[3] = clCreateBuffer(opencl_ctx, CL_MEM_READ_WRITE, sizeof(cl_uint) * (g_thd + 2), NULL, &ret);
 	if(ret != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clCreateBuffer to create Branch 1 buffer.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clCreateBuffer to create Branch 1 buffer.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
@@ -348,7 +321,7 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 	ctx->ExtraBuffers[4] = clCreateBuffer(opencl_ctx, CL_MEM_READ_WRITE, sizeof(cl_uint) * (g_thd + 2), NULL, &ret);
 	if(ret != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clCreateBuffer to create Branch 2 buffer.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clCreateBuffer to create Branch 2 buffer.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
@@ -356,7 +329,7 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 	ctx->ExtraBuffers[5] = clCreateBuffer(opencl_ctx, CL_MEM_READ_WRITE, sizeof(cl_uint) * (g_thd + 2), NULL, &ret);
 	if(ret != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clCreateBuffer to create Branch 3 buffer.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clCreateBuffer to create Branch 3 buffer.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
@@ -364,20 +337,20 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 	ctx->OutputBuffer = clCreateBuffer(opencl_ctx, CL_MEM_READ_WRITE, sizeof(cl_uint) * 0x100, NULL, &ret);
 	if(ret != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clCreateBuffer to create output buffer.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clCreateBuffer to create output buffer.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
 	std::vector<char> devNameVec(1024);
 	if((ret = clGetDeviceInfo(ctx->DeviceID, CL_DEVICE_NAME, devNameVec.size(), devNameVec.data(), NULL)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceInfo to get CL_DEVICE_NAME for device %u.", err_to_str(ret),ctx->deviceIdx );
+		Printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceInfo to get CL_DEVICE_NAME for device %u.", err_to_str(ret),ctx->deviceIdx );
 		return ERR_OCL_API;
 	}
 
 	xmrstak_algo miner_algo[2] = {
-		::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgo(),
-		::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgoRoot()
+		::jconf::inst()->GetCurrentCoinSelection().GetDescription().GetMiningAlgo(),
+		::jconf::inst()->GetCurrentCoinSelection().GetDescription().GetMiningAlgoRoot()
 	};
 	int num_algos = miner_algo[0] == miner_algo[1] ? 1 : 2;
 
@@ -410,11 +383,11 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 		if(xmrstak::params::inst().AMDCache == false || !clBinFile.good())
 		{
 			if(xmrstak::params::inst().AMDCache)
-				printer::inst()->print_msg(L1,"OpenCL device %u - Precompiled code %s not found. Compiling ...",ctx->deviceIdx, cache_file.c_str());
+				Printer::inst()->print_msg(L1,"OpenCL device %u - Precompiled code %s not found. Compiling ...",ctx->deviceIdx, cache_file.c_str());
 			ctx->Program[ii] = clCreateProgramWithSource(opencl_ctx, 1, (const char**)&source_code, NULL, &ret);
 			if(ret != CL_SUCCESS)
 			{
-				printer::inst()->print_msg(L1,"Error %s when calling clCreateProgramWithSource on the OpenCL miner code", err_to_str(ret));
+				Printer::inst()->print_msg(L1,"Error %s when calling clCreateProgramWithSource on the OpenCL miner code", err_to_str(ret));
 				return ERR_OCL_API;
 			}
 
@@ -422,11 +395,11 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 			if(ret != CL_SUCCESS)
 			{
 				size_t len;
-				printer::inst()->print_msg(L1,"Error %s when calling clBuildProgram.", err_to_str(ret));
+				Printer::inst()->print_msg(L1,"Error %s when calling clBuildProgram.", err_to_str(ret));
 
 				if((ret = clGetProgramBuildInfo(ctx->Program[ii], ctx->DeviceID, CL_PROGRAM_BUILD_LOG, 0, NULL, &len)) != CL_SUCCESS)
 				{
-					printer::inst()->print_msg(L1,"Error %s when calling clGetProgramBuildInfo for length of build log output.", err_to_str(ret));
+					Printer::inst()->print_msg(L1,"Error %s when calling clGetProgramBuildInfo for length of build log output.", err_to_str(ret));
 					return ERR_OCL_API;
 				}
 
@@ -436,11 +409,11 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 				if((ret = clGetProgramBuildInfo(ctx->Program[ii], ctx->DeviceID, CL_PROGRAM_BUILD_LOG, len, BuildLog, NULL)) != CL_SUCCESS)
 				{
 					free(BuildLog);
-					printer::inst()->print_msg(L1,"Error %s when calling clGetProgramBuildInfo for build log.", err_to_str(ret));
+					Printer::inst()->print_msg(L1,"Error %s when calling clGetProgramBuildInfo for build log.", err_to_str(ret));
 					return ERR_OCL_API;
 				}
 
-				printer::inst()->print_str("Build log:\n");
+				Printer::inst()->print_str("Build log:\n");
 				std::cerr<<BuildLog<<std::endl;
 
 				free(BuildLog);
@@ -469,7 +442,7 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 			{
 				if((ret = clGetProgramBuildInfo(ctx->Program[ii], ctx->DeviceID, CL_PROGRAM_BUILD_STATUS, sizeof(cl_build_status), &status, NULL)) != CL_SUCCESS)
 				{
-					printer::inst()->print_msg(L1,"Error %s when calling clGetProgramBuildInfo for status of build.", err_to_str(ret));
+					Printer::inst()->print_msg(L1,"Error %s when calling clGetProgramBuildInfo for status of build.", err_to_str(ret));
 					return ERR_OCL_API;
 				}
 				port_sleep(1);
@@ -497,7 +470,7 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 
 				if((ret = clGetProgramInfo(ctx->Program[ii], CL_PROGRAM_BINARIES, num_devices * sizeof(char*), all_programs.data(),NULL)) != CL_SUCCESS)
 				{
-					printer::inst()->print_msg(L1,"Error %s when calling clGetProgramInfo.", err_to_str(ret));
+					Printer::inst()->print_msg(L1,"Error %s when calling clGetProgramInfo.", err_to_str(ret));
 					return ERR_OCL_API;
 				}
 
@@ -505,12 +478,12 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 				file_stream.open(cache_file, std::ofstream::out | std::ofstream::binary);
 				file_stream.write(all_programs[dev_id], binary_sizes[dev_id]);
 				file_stream.close();
-				printer::inst()->print_msg(L1, "OpenCL device %u - Precompiled code stored in file %s",ctx->deviceIdx, cache_file.c_str());
+				Printer::inst()->print_msg(L1, "OpenCL device %u - Precompiled code stored in file %s",ctx->deviceIdx, cache_file.c_str());
 			}
 		}
 		else
 		{
-			printer::inst()->print_msg(L1, "OpenCL device %u - Load precompiled code from file %s",ctx->deviceIdx, cache_file.c_str());
+			Printer::inst()->print_msg(L1, "OpenCL device %u - Load precompiled code from file %s",ctx->deviceIdx, cache_file.c_str());
 			std::ostringstream ss;
 			ss << clBinFile.rdbuf();
 			std::string s = ss.str();
@@ -525,13 +498,13 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 			);
 			if(ret != CL_SUCCESS)
 			{
-				printer::inst()->print_msg(L1,"Error %s when calling clCreateProgramWithBinary. Try to delete file %s", err_to_str(ret), cache_file.c_str());
+				Printer::inst()->print_msg(L1,"Error %s when calling clCreateProgramWithBinary. Try to delete file %s", err_to_str(ret), cache_file.c_str());
 				return ERR_OCL_API;
 			}
 			ret = clBuildProgram(ctx->Program[ii], 1, &ctx->DeviceID, NULL, NULL, NULL);
 			if(ret != CL_SUCCESS)
 			{
-				printer::inst()->print_msg(L1,"Error %s when calling clBuildProgram. Try to delete file %s", err_to_str(ret), cache_file.c_str());
+				Printer::inst()->print_msg(L1,"Error %s when calling clBuildProgram. Try to delete file %s", err_to_str(ret), cache_file.c_str());
 				return ERR_OCL_API;
 			}
 		}
@@ -548,7 +521,7 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 				ctx->Kernels[ii][i] = clCreateKernel(ctx->Program[ii], KernelNames[i].c_str(), &ret);
 				if(ret != CL_SUCCESS)
 				{
-					printer::inst()->print_msg(L1,"Error %s when calling clCreateKernel for kernel_0 %s.", err_to_str(ret), KernelNames[i].c_str());
+					Printer::inst()->print_msg(L1,"Error %s when calling clCreateKernel for kernel_0 %s.", err_to_str(ret), KernelNames[i].c_str());
 					return ERR_OCL_API;
 				}
 			}
@@ -560,7 +533,7 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 				ctx->Kernels[ii][i] = clCreateKernel(ctx->Program[ii], KernelNames[i].c_str(), &ret);
 				if(ret != CL_SUCCESS)
 				{
-					printer::inst()->print_msg(L1,"Error %s when calling clCreateKernel for kernel_1 %s.", err_to_str(ret), KernelNames[i].c_str());
+					Printer::inst()->print_msg(L1,"Error %s when calling clCreateKernel for kernel_1 %s.", err_to_str(ret), KernelNames[i].c_str());
 					return ERR_OCL_API;
 				}
 			}
@@ -576,56 +549,16 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 	return 0;
 }
 
-const cl_platform_info attributeTypes[5] = {
-	CL_PLATFORM_NAME,
-	CL_PLATFORM_VENDOR,
-	CL_PLATFORM_VERSION,
-	CL_PLATFORM_PROFILE,
-	CL_PLATFORM_EXTENSIONS
-};
-
-const char* const attributeNames[] = {
-	"CL_PLATFORM_NAME",
-	"CL_PLATFORM_VENDOR",
-	"CL_PLATFORM_VERSION",
-	"CL_PLATFORM_PROFILE",
-	"CL_PLATFORM_EXTENSIONS"
-};
-
-#define NELEMS(x)  (sizeof(x) / sizeof((x)[0]))
-
-void PrintDeviceInfo(cl_device_id device)
-{
-	char queryBuffer[1024];
-	int queryInt;
-	cl_int clError;
-	clError = clGetDeviceInfo(device, CL_DEVICE_NAME, sizeof(queryBuffer), &queryBuffer, NULL);
-	printf("    CL_DEVICE_NAME: %s\n", queryBuffer);
-	queryBuffer[0] = '\0';
-	clError = clGetDeviceInfo(device, CL_DEVICE_VENDOR, sizeof(queryBuffer), &queryBuffer, NULL);
-	printf("    CL_DEVICE_VENDOR: %s\n", queryBuffer);
-	queryBuffer[0] = '\0';
-	clError = clGetDeviceInfo(device, CL_DRIVER_VERSION, sizeof(queryBuffer), &queryBuffer, NULL);
-	printf("    CL_DRIVER_VERSION: %s\n", queryBuffer);
-	queryBuffer[0] = '\0';
-	clError = clGetDeviceInfo(device, CL_DEVICE_VERSION, sizeof(queryBuffer), &queryBuffer, NULL);
-	printf("    CL_DEVICE_VERSION: %s\n", queryBuffer);
-	queryBuffer[0] = '\0';
-	clError = clGetDeviceInfo(device, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(int), &queryInt, NULL);
-	printf("    CL_DEVICE_MAX_COMPUTE_UNITS: %d\n", queryInt);
-}
-
 uint32_t getNumPlatforms()
 {
 	cl_uint num_platforms = 0;
-	cl_platform_id * platforms = NULL;
 	cl_int clStatus;
 
 	// Get platform and device information
 	clStatus = clGetPlatformIDs(0, NULL, &num_platforms);
 	if(clStatus != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"WARNING: %s when calling clGetPlatformIDs for number of platforms.", err_to_str(clStatus));
+		Printer::inst()->print_msg(L1,"WARNING: %s when calling clGetPlatformIDs for number of platforms.", err_to_str(clStatus));
 		return 0u;
 	}
 
@@ -648,20 +581,20 @@ std::vector<GpuContext> getAMDDevices(int index)
 	platforms.resize(numPlatforms);
 	if((clStatus = clGetPlatformIDs(numPlatforms, platforms.data(), NULL)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"WARNING: %s when calling clGetPlatformIDs for platform information.", err_to_str(clStatus));
+		Printer::inst()->print_msg(L1,"WARNING: %s when calling clGetPlatformIDs for platform information.", err_to_str(clStatus));
 		return ctxVec;
 	}
 
 	if((clStatus = clGetDeviceIDs( platforms[index], CL_DEVICE_TYPE_GPU, 0, NULL, &num_devices)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceIDs for of devices.", err_to_str(clStatus));
+		Printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceIDs for of devices.", err_to_str(clStatus));
 		return ctxVec;
 	}
 
 	device_list.resize(num_devices);
 	if((clStatus = clGetDeviceIDs( platforms[index], CL_DEVICE_TYPE_GPU, num_devices, device_list.data(), NULL)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceIDs for device information.", err_to_str(clStatus));
+		Printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceIDs for device information.", err_to_str(clStatus));
 		return ctxVec;
 	}
 
@@ -670,49 +603,42 @@ std::vector<GpuContext> getAMDDevices(int index)
 		std::vector<char> devVendorVec(1024);
 		if((clStatus = clGetDeviceInfo(device_list[k], CL_DEVICE_VENDOR, devVendorVec.size(), devVendorVec.data(), NULL)) != CL_SUCCESS)
 		{
-			printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceInfo to get the device vendor name for device %u.", err_to_str(clStatus), k);
+			Printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceInfo to get the device vendor name for device %u.", err_to_str(clStatus), k);
 			continue;
 		}
 
 		std::string devVendor(devVendorVec.data());
 
 		bool isAMDDevice = devVendor.find("Advanced Micro Devices") != std::string::npos || devVendor.find("AMD") != std::string::npos;
-		bool isNVIDIADevice = devVendor.find("NVIDIA Corporation") != std::string::npos || devVendor.find("NVIDIA") != std::string::npos;
 
 		std::string selectedOpenCLVendor = xmrstak::params::inst().openCLVendor;
-		if((isAMDDevice && selectedOpenCLVendor == "AMD") || (isNVIDIADevice && selectedOpenCLVendor == "NVIDIA"))
+		if((isAMDDevice && selectedOpenCLVendor == "AMD"))
 		{
 			GpuContext ctx;
 			std::vector<char> devNameVec(1024);
 			size_t maxMem;
-			if( devVendor.find("NVIDIA Corporation") != std::string::npos)
-				ctx.isNVIDIA = true;
 
 			if((clStatus = clGetDeviceInfo(device_list[k], CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(int), &(ctx.computeUnits), NULL)) != CL_SUCCESS)
 			{
-				printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceInfo to get CL_DEVICE_MAX_COMPUTE_UNITS for device %u.", err_to_str(clStatus), k);
+				Printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceInfo to get CL_DEVICE_MAX_COMPUTE_UNITS for device %u.", err_to_str(clStatus), k);
 				continue;
 			}
 
 			if((clStatus = clGetDeviceInfo(device_list[k], CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(size_t), &(maxMem), NULL)) != CL_SUCCESS)
 			{
-				printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceInfo to get CL_DEVICE_MAX_MEM_ALLOC_SIZE for device %u.", err_to_str(clStatus), k);
+				Printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceInfo to get CL_DEVICE_MAX_MEM_ALLOC_SIZE for device %u.", err_to_str(clStatus), k);
 				continue;
 			}
 
 			if((clStatus = clGetDeviceInfo(device_list[k], CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(size_t), &(ctx.freeMem), NULL)) != CL_SUCCESS)
 			{
-				printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceInfo to get CL_DEVICE_GLOBAL_MEM_SIZE for device %u.", err_to_str(clStatus), k);
+				Printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceInfo to get CL_DEVICE_GLOBAL_MEM_SIZE for device %u.", err_to_str(clStatus), k);
 				continue;
 			}
 
-			// the allocation for NVIDIA OpenCL is not limited to 1/4 of the GPU memory per allocation
-			if(ctx.isNVIDIA)
-				maxMem = ctx.freeMem;
-
 			if((clStatus = clGetDeviceInfo(device_list[k], CL_DEVICE_NAME, devNameVec.size(), devNameVec.data(), NULL)) != CL_SUCCESS)
 			{
-				printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceInfo to get CL_DEVICE_NAME for device %u.", err_to_str(clStatus), k);
+				Printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceInfo to get CL_DEVICE_NAME for device %u.", err_to_str(clStatus), k);
 				continue;
 			}
 
@@ -721,7 +647,7 @@ std::vector<GpuContext> getAMDDevices(int index)
 			ctx.freeMem = std::min(ctx.freeMem, maxMem);
 			ctx.name = std::string(devNameVec.data());
 			ctx.DeviceID = device_list[k];
-			printer::inst()->print_msg(L0,"Found OpenCL GPU %s.",ctx.name.c_str());
+			Printer::inst()->print_msg(L0,"Found OpenCL GPU %s.",ctx.name.c_str());
 			ctxVec.push_back(ctx);
 		}
 	}
@@ -736,7 +662,7 @@ int getAMDPlatformIdx()
 
 	if(numPlatforms == 0)
 	{
-		printer::inst()->print_msg(L0,"WARNING: No OpenCL platform found.");
+		Printer::inst()->print_msg(L0,"WARNING: No OpenCL platform found.");
 		return -1;
 	}
 	cl_platform_id * platforms = NULL;
@@ -762,11 +688,10 @@ int getAMDPlatformIdx()
 			bool isAMDOpenCL = platformName.find("Advanced Micro Devices") != std::string::npos ||
 				platformName.find("Apple") != std::string::npos ||
 				platformName.find("Mesa") != std::string::npos;
-			bool isNVIDIADevice = platformName.find("NVIDIA Corporation") != std::string::npos || platformName.find("NVIDIA") != std::string::npos;
 			std::string selectedOpenCLVendor = xmrstak::params::inst().openCLVendor;
-			if((isAMDOpenCL && selectedOpenCLVendor == "AMD") || (isNVIDIADevice && selectedOpenCLVendor == "NVIDIA"))
+			if((isAMDOpenCL && selectedOpenCLVendor == "AMD"))
 			{
-				printer::inst()->print_msg(L0,"Found %s platform index id = %i, name = %s", selectedOpenCLVendor.c_str(), i , platformName.c_str());
+				Printer::inst()->print_msg(L0,"Found %s platform index id = %i, name = %s", selectedOpenCLVendor.c_str(), i , platformName.c_str());
 				if(platformName.find("Mesa") != std::string::npos)
 					mesaPlatform = i;
 				else
@@ -780,12 +705,12 @@ int getAMDPlatformIdx()
 		// fall back to Mesa OpenCL
 		if(platformIndex == -1 && mesaPlatform != -1)
 		{
-			printer::inst()->print_msg(L0,"No AMD platform found select Mesa as OpenCL platform");
+			Printer::inst()->print_msg(L0,"No AMD platform found select Mesa as OpenCL platform");
 			platformIndex = mesaPlatform;
 		}
 	}
 	else
-		printer::inst()->print_msg(L1,"WARNING: %s when calling clGetPlatformIDs for platform information.", err_to_str(clStatus));
+		Printer::inst()->print_msg(L1,"WARNING: %s when calling clGetPlatformIDs for platform information.", err_to_str(clStatus));
 
 	free(platforms);
 	return platformIndex;
@@ -803,7 +728,7 @@ size_t InitOpenCL(GpuContext* ctx, size_t num_gpus, size_t platform_idx)
 
 	if((ret = clGetPlatformIDs(0, NULL, &entries)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clGetPlatformIDs for number of platforms.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clGetPlatformIDs for number of platforms.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
@@ -811,7 +736,7 @@ size_t InitOpenCL(GpuContext* ctx, size_t num_gpus, size_t platform_idx)
 	// The number of platforms naturally is the index of the last platform plus one.
 	if(entries <= platform_idx)
 	{
-		printer::inst()->print_msg(L1,"Selected OpenCL platform index %d doesn't exist.", platform_idx);
+		Printer::inst()->print_msg(L1,"Selected OpenCL platform index %d doesn't exist.", platform_idx);
 		return ERR_STUPID_PARAMS;
 	}
 
@@ -823,7 +748,7 @@ size_t InitOpenCL(GpuContext* ctx, size_t num_gpus, size_t platform_idx)
 #endif
 	if((ret = clGetPlatformIDs(entries, PlatformIDList, NULL)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clGetPlatformIDs for platform ID information.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clGetPlatformIDs for platform ID information.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
@@ -834,12 +759,12 @@ size_t InitOpenCL(GpuContext* ctx, size_t num_gpus, size_t platform_idx)
 	std::string platformName(platformNameVec.data());
 	if(xmrstak::params::inst().openCLVendor == "AMD" && platformName.find("Advanced Micro Devices") == std::string::npos)
 	{
-		printer::inst()->print_msg(L1,"WARNING: using non AMD device: %s", platformName.c_str());
+		Printer::inst()->print_msg(L1,"WARNING: using non AMD device: %s", platformName.c_str());
 	}
 
 	if((ret = clGetDeviceIDs(PlatformIDList[platform_idx], CL_DEVICE_TYPE_GPU, 0, NULL, &entries)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clGetDeviceIDs for number of devices.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clGetDeviceIDs for number of devices.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
@@ -848,7 +773,7 @@ size_t InitOpenCL(GpuContext* ctx, size_t num_gpus, size_t platform_idx)
 	{
 		if(entries <= ctx[i].deviceIdx)
 		{
-			printer::inst()->print_msg(L1,"Selected OpenCL device index %lu doesn't exist.\n", ctx[i].deviceIdx);
+			Printer::inst()->print_msg(L1,"Selected OpenCL device index %lu doesn't exist.\n", ctx[i].deviceIdx);
 			return ERR_STUPID_PARAMS;
 		}
 	}
@@ -860,7 +785,7 @@ size_t InitOpenCL(GpuContext* ctx, size_t num_gpus, size_t platform_idx)
 #endif
 	if((ret = clGetDeviceIDs(PlatformIDList[platform_idx], CL_DEVICE_TYPE_GPU, entries, DeviceIDList, NULL)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clGetDeviceIDs for device ID information.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clGetDeviceIDs for device ID information.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
@@ -879,11 +804,9 @@ size_t InitOpenCL(GpuContext* ctx, size_t num_gpus, size_t platform_idx)
 	opencl_ctx = clCreateContext(NULL, num_gpus, TempDeviceList, NULL, NULL, &ret);
 	if(ret != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clCreateContext.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clCreateContext.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
-
-	//char* source_code = LoadTextFile(sSourcePath);
 
 	const char *cryptonightCL =
 			#include "./opencl/cryptonight.cl"
@@ -921,7 +844,7 @@ size_t InitOpenCL(GpuContext* ctx, size_t num_gpus, size_t platform_idx)
 			size_t reduced_intensity = (ctx[i].rawIntensity / ctx[i].workSize) * ctx[i].workSize;
 			ctx[i].rawIntensity = reduced_intensity;
 			const std::string backendName = xmrstak::params::inst().openCLVendor;
-			printer::inst()->print_msg(L0, "WARNING %s: gpu %d intensity is not a multiple of 'worksize', auto reduce intensity to %d", backendName.c_str(), ctx[i].deviceIdx, int(reduced_intensity));
+			Printer::inst()->print_msg(L0, "WARNING %s: gpu %d intensity is not a multiple of 'worksize', auto reduce intensity to %d", backendName.c_str(), ctx[i].deviceIdx, int(reduced_intensity));
 		}
 
 		if((ret = InitOpenCLGpu(opencl_ctx, &ctx[i], source_code.c_str())) != ERR_SUCCESS)
@@ -936,7 +859,7 @@ size_t InitOpenCL(GpuContext* ctx, size_t num_gpus, size_t platform_idx)
 size_t XMRSetJob(GpuContext* ctx, uint8_t* input, size_t input_len, uint64_t target, xmrstak_algo miner_algo)
 {
 	// switch to the kernel storage
-	int kernel_storage = miner_algo == ::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgo() ? 0 : 1;
+	int kernel_storage = miner_algo == ::jconf::inst()->GetCurrentCoinSelection().GetDescription().GetMiningAlgo() ? 0 : 1;
 
 	cl_int ret;
 
@@ -950,34 +873,34 @@ size_t XMRSetJob(GpuContext* ctx, uint8_t* input, size_t input_len, uint64_t tar
 
 	if((ret = clEnqueueWriteBuffer(ctx->CommandQueues, ctx->InputBuffer, CL_TRUE, 0, 88, input, 0, NULL, NULL)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clEnqueueWriteBuffer to fill input buffer.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clEnqueueWriteBuffer to fill input buffer.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
 	if((ret = clSetKernelArg(ctx->Kernels[kernel_storage][0], 0, sizeof(cl_mem), &ctx->InputBuffer)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 0, argument 0.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 0, argument 0.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
 	// Scratchpads
 	if((ret = clSetKernelArg(ctx->Kernels[kernel_storage][0], 1, sizeof(cl_mem), ctx->ExtraBuffers + 0)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 0, argument 1.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 0, argument 1.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
 	// States
 	if((ret = clSetKernelArg(ctx->Kernels[kernel_storage][0], 2, sizeof(cl_mem), ctx->ExtraBuffers + 1)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 0, argument 2.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 0, argument 2.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
 	// Threads
 	if((ret = clSetKernelArg(ctx->Kernels[kernel_storage][0], 3, sizeof(cl_ulong), &numThreads)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 0, argument 3.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 0, argument 3.", err_to_str(ret));
 		return(ERR_OCL_API);
 	}
 
@@ -986,21 +909,21 @@ size_t XMRSetJob(GpuContext* ctx, uint8_t* input, size_t input_len, uint64_t tar
 	// Scratchpads
 	if((ret = clSetKernelArg(ctx->Kernels[kernel_storage][1], 0, sizeof(cl_mem), ctx->ExtraBuffers + 0)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 1, argument 0.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 1, argument 0.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
 	// States
 	if((ret = clSetKernelArg(ctx->Kernels[kernel_storage][1], 1, sizeof(cl_mem), ctx->ExtraBuffers + 1)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 1, argument 1.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 1, argument 1.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
 	// Threads
 	if((ret = clSetKernelArg(ctx->Kernels[kernel_storage][1], 2, sizeof(cl_ulong), &numThreads)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 1, argument 2.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 1, argument 2.", err_to_str(ret));
 		return(ERR_OCL_API);
 	}
 
@@ -1009,7 +932,7 @@ size_t XMRSetJob(GpuContext* ctx, uint8_t* input, size_t input_len, uint64_t tar
 		// Input
 		if ((ret = clSetKernelArg(ctx->Kernels[kernel_storage][1], 3, sizeof(cl_mem), &ctx->InputBuffer)) != CL_SUCCESS)
 		{
-			printer::inst()->print_msg(L1, "Error %s when calling clSetKernelArg for kernel 1, argument 4(input buffer).", err_to_str(ret));
+			Printer::inst()->print_msg(L1, "Error %s when calling clSetKernelArg for kernel 1, argument 4(input buffer).", err_to_str(ret));
 			return ERR_OCL_API;
 		}
 	}
@@ -1018,49 +941,49 @@ size_t XMRSetJob(GpuContext* ctx, uint8_t* input, size_t input_len, uint64_t tar
 	// Scratchpads
 	if((ret = clSetKernelArg(ctx->Kernels[kernel_storage][2], 0, sizeof(cl_mem), ctx->ExtraBuffers + 0)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 2, argument 0.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 2, argument 0.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
 	// States
 	if((ret = clSetKernelArg(ctx->Kernels[kernel_storage][2], 1, sizeof(cl_mem), ctx->ExtraBuffers + 1)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 2, argument 1.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 2, argument 1.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
 	// Branch 0
 	if((ret = clSetKernelArg(ctx->Kernels[kernel_storage][2], 2, sizeof(cl_mem), ctx->ExtraBuffers + 2)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 2, argument 2.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 2, argument 2.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
 	// Branch 1
 	if((ret = clSetKernelArg(ctx->Kernels[kernel_storage][2], 3, sizeof(cl_mem), ctx->ExtraBuffers + 3)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 2, argument 3.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 2, argument 3.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
 	// Branch 2
 	if((ret = clSetKernelArg(ctx->Kernels[kernel_storage][2], 4, sizeof(cl_mem), ctx->ExtraBuffers + 4)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 2, argument 4.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 2, argument 4.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
 	// Branch 3
 	if((ret = clSetKernelArg(ctx->Kernels[kernel_storage][2], 5, sizeof(cl_mem), ctx->ExtraBuffers + 5)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 2, argument 5.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 2, argument 5.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
 	// Threads
 	if((ret = clSetKernelArg(ctx->Kernels[kernel_storage][2], 6, sizeof(cl_ulong), &numThreads)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 2, argument 6.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel 2, argument 6.", err_to_str(ret));
 		return(ERR_OCL_API);
 	}
 
@@ -1069,28 +992,28 @@ size_t XMRSetJob(GpuContext* ctx, uint8_t* input, size_t input_len, uint64_t tar
 		// States
 		if((ret = clSetKernelArg(ctx->Kernels[kernel_storage][i + 3], 0, sizeof(cl_mem), ctx->ExtraBuffers + 1)) != CL_SUCCESS)
 		{
-			printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel %d, argument %d.", err_to_str(ret), i + 3, 0);
+			Printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel %d, argument %d.", err_to_str(ret), i + 3, 0);
 			return ERR_OCL_API;
 		}
 
 		// Nonce buffer
 		if((ret = clSetKernelArg(ctx->Kernels[kernel_storage][i + 3], 1, sizeof(cl_mem), ctx->ExtraBuffers + (i + 2))) != CL_SUCCESS)
 		{
-			printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel %d, argument %d.", err_to_str(ret), i + 3, 1);
+			Printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel %d, argument %d.", err_to_str(ret), i + 3, 1);
 			return ERR_OCL_API;
 		}
 
 		// Output
 		if((ret = clSetKernelArg(ctx->Kernels[kernel_storage][i + 3], 2, sizeof(cl_mem), &ctx->OutputBuffer)) != CL_SUCCESS)
 		{
-			printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel %d, argument %d.", err_to_str(ret), i + 3, 2);
+			Printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel %d, argument %d.", err_to_str(ret), i + 3, 2);
 			return ERR_OCL_API;
 		}
 
 		// Target
 		if((ret = clSetKernelArg(ctx->Kernels[kernel_storage][i + 3], 3, sizeof(cl_ulong), &target)) != CL_SUCCESS)
 		{
-			printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel %d, argument %d.", err_to_str(ret), i + 3, 3);
+			Printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel %d, argument %d.", err_to_str(ret), i + 3, 3);
 			return ERR_OCL_API;
 		}
 	}
@@ -1101,7 +1024,7 @@ size_t XMRSetJob(GpuContext* ctx, uint8_t* input, size_t input_len, uint64_t tar
 size_t XMRRunJob(GpuContext* ctx, cl_uint* HashOutput, xmrstak_algo miner_algo)
 {
 	// switch to the kernel storage
-	int kernel_storage = miner_algo == ::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgo() ? 0 : 1;
+	int kernel_storage = miner_algo == ::jconf::inst()->GetCurrentCoinSelection().GetDescription().GetMiningAlgo() ? 0 : 1;
 
 	cl_int ret;
 	cl_uint zero = 0;
@@ -1124,14 +1047,14 @@ size_t XMRRunJob(GpuContext* ctx, cl_uint* HashOutput, xmrstak_algo miner_algo)
 	{
 		if((ret = clEnqueueWriteBuffer(ctx->CommandQueues, ctx->ExtraBuffers[i], CL_FALSE, sizeof(cl_uint) * g_intensity, sizeof(cl_uint), &zero, 0, NULL, NULL)) != CL_SUCCESS)
 		{
-			printer::inst()->print_msg(L1,"Error %s when calling clEnqueueWriteBuffer to zero branch buffer counter %d.", err_to_str(ret), i - 2);
+			Printer::inst()->print_msg(L1,"Error %s when calling clEnqueueWriteBuffer to zero branch buffer counter %d.", err_to_str(ret), i - 2);
 			return ERR_OCL_API;
 		}
 	}
 
 	if((ret = clEnqueueWriteBuffer(ctx->CommandQueues, ctx->OutputBuffer, CL_FALSE, sizeof(cl_uint) * 0xFF, sizeof(cl_uint), &zero, 0, NULL, NULL)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clEnqueueReadBuffer to fetch results.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clEnqueueReadBuffer to fetch results.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
@@ -1140,7 +1063,7 @@ size_t XMRRunJob(GpuContext* ctx, cl_uint* HashOutput, xmrstak_algo miner_algo)
 	size_t Nonce[2] = {ctx->Nonce, 1}, gthreads[2] = { g_thd, 8 }, lthreads[2] = { w_size, 8 };
 	if((ret = clEnqueueNDRangeKernel(ctx->CommandQueues, ctx->Kernels[kernel_storage][0], 2, Nonce, gthreads, lthreads, 0, NULL, NULL)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clEnqueueNDRangeKernel for kernel %d.", err_to_str(ret), 0);
+		Printer::inst()->print_msg(L1,"Error %s when calling clEnqueueNDRangeKernel for kernel %d.", err_to_str(ret), 0);
 		return ERR_OCL_API;
 	}
 
@@ -1148,37 +1071,37 @@ size_t XMRRunJob(GpuContext* ctx, cl_uint* HashOutput, xmrstak_algo miner_algo)
 
 	if((ret = clEnqueueNDRangeKernel(ctx->CommandQueues, ctx->Kernels[kernel_storage][1], 1, &tmpNonce, &g_thd, &w_size, 0, NULL, NULL)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clEnqueueNDRangeKernel for kernel %d.", err_to_str(ret), 1);
+		Printer::inst()->print_msg(L1,"Error %s when calling clEnqueueNDRangeKernel for kernel %d.", err_to_str(ret), 1);
 		return ERR_OCL_API;
 	}
 
 	if((ret = clEnqueueNDRangeKernel(ctx->CommandQueues, ctx->Kernels[kernel_storage][2], 2, Nonce, gthreads, lthreads, 0, NULL, NULL)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clEnqueueNDRangeKernel for kernel %d.", err_to_str(ret), 2);
+		Printer::inst()->print_msg(L1,"Error %s when calling clEnqueueNDRangeKernel for kernel %d.", err_to_str(ret), 2);
 		return ERR_OCL_API;
 	}
 
 	if((ret = clEnqueueReadBuffer(ctx->CommandQueues, ctx->ExtraBuffers[2], CL_FALSE, sizeof(cl_uint) * g_intensity, sizeof(cl_uint), BranchNonces, 0, NULL, NULL)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clEnqueueReadBuffer to fetch results.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clEnqueueReadBuffer to fetch results.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
 	if((ret = clEnqueueReadBuffer(ctx->CommandQueues, ctx->ExtraBuffers[3], CL_FALSE, sizeof(cl_uint) * g_intensity, sizeof(cl_uint), BranchNonces + 1, 0, NULL, NULL)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clEnqueueReadBuffer to fetch results.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clEnqueueReadBuffer to fetch results.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
 	if((ret = clEnqueueReadBuffer(ctx->CommandQueues, ctx->ExtraBuffers[4], CL_FALSE, sizeof(cl_uint) * g_intensity, sizeof(cl_uint), BranchNonces + 2, 0, NULL, NULL)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clEnqueueReadBuffer to fetch results.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clEnqueueReadBuffer to fetch results.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
 	if((ret = clEnqueueReadBuffer(ctx->CommandQueues, ctx->ExtraBuffers[5], CL_FALSE, sizeof(cl_uint) * g_intensity, sizeof(cl_uint), BranchNonces + 3, 0, NULL, NULL)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clEnqueueReadBuffer to fetch results.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clEnqueueReadBuffer to fetch results.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
@@ -1191,7 +1114,7 @@ size_t XMRRunJob(GpuContext* ctx, cl_uint* HashOutput, xmrstak_algo miner_algo)
 			// Threads
 			if((clSetKernelArg(ctx->Kernels[kernel_storage][i + 3], 4, sizeof(cl_ulong), BranchNonces + i)) != CL_SUCCESS)
 			{
-				printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel %d, argument %d.", err_to_str(ret), i + 3, 4);
+				Printer::inst()->print_msg(L1,"Error %s when calling clSetKernelArg for kernel %d, argument %d.", err_to_str(ret), i + 3, 4);
 				return(ERR_OCL_API);
 			}
 
@@ -1202,7 +1125,7 @@ size_t XMRRunJob(GpuContext* ctx, cl_uint* HashOutput, xmrstak_algo miner_algo)
 			size_t tmpNonce = ctx->Nonce;
 			if((ret = clEnqueueNDRangeKernel(ctx->CommandQueues, ctx->Kernels[kernel_storage][i + 3], 1, &tmpNonce, BranchNonces + i, &w_size, 0, NULL, NULL)) != CL_SUCCESS)
 			{
-				printer::inst()->print_msg(L1,"Error %s when calling clEnqueueNDRangeKernel for kernel %d.", err_to_str(ret), i + 3);
+				Printer::inst()->print_msg(L1,"Error %s when calling clEnqueueNDRangeKernel for kernel %d.", err_to_str(ret), i + 3);
 				return ERR_OCL_API;
 			}
 		}
@@ -1210,7 +1133,7 @@ size_t XMRRunJob(GpuContext* ctx, cl_uint* HashOutput, xmrstak_algo miner_algo)
 
 	if((ret = clEnqueueReadBuffer(ctx->CommandQueues, ctx->OutputBuffer, CL_TRUE, 0, sizeof(cl_uint) * 0x100, HashOutput, 0, NULL, NULL)) != CL_SUCCESS)
 	{
-		printer::inst()->print_msg(L1,"Error %s when calling clEnqueueReadBuffer to fetch results.", err_to_str(ret));
+		Printer::inst()->print_msg(L1,"Error %s when calling clEnqueueReadBuffer to fetch results.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 

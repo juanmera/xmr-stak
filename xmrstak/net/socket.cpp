@@ -22,7 +22,6 @@
   */
 
 #include "socket.hpp"
-#include "jpsock.hpp"
 #include "xmrstak/jconf.hpp"
 #include "xmrstak/misc/console.hpp"
 #include "xmrstak/misc/executor.hpp"
@@ -37,14 +36,12 @@
 #endif
 #endif
 
-plain_socket::plain_socket(jpsock* err_callback) : pCallback(err_callback)
-{
+plain_socket::plain_socket(jpsock* err_callback) : pCallback(err_callback) {
 	hSocket = INVALID_SOCKET;
 	pSockAddr = nullptr;
 }
 
-bool plain_socket::set_hostname(const char* sAddr)
-{
+bool plain_socket::set_hostname(const char* sAddr) {
 	char sAddrMb[256];
 	char *sTmp, *sPort;
 
@@ -56,14 +53,14 @@ bool plain_socket::set_hostname(const char* sAddr)
 	memcpy(sAddrMb, sAddr, ln);
 	sAddrMb[ln] = '\0';
 
-	if ((sTmp = strstr(sAddrMb, "//")) != nullptr)
-	{
+	if ((sTmp = strstr(sAddrMb, "//")) != nullptr) {
 		sTmp += 2;
 		memmove(sAddrMb, sTmp, strlen(sTmp) + 1);
 	}
 
-	if ((sPort = strchr(sAddrMb, ':')) == nullptr)
-		return pCallback->set_socket_error("CONNECT error: Pool port number not specified, please use format <hostname>:<port>.");
+	if ((sPort = strchr(sAddrMb, ':')) == nullptr) {
+	    return pCallback->set_socket_error("CONNECT error: Pool port number not specified, please use format <hostname>:<port>.");
+	}
 
 	sPort[0] = '\0';
 	sPort++;
@@ -75,44 +72,43 @@ bool plain_socket::set_hostname(const char* sAddr)
 
 	pAddrRoot = nullptr;
 	int err;
-	if ((err = getaddrinfo(sAddrMb, sPort, &hints, &pAddrRoot)) != 0)
-		return pCallback->set_socket_error_strerr("CONNECT error: GetAddrInfo: ", err);
+	if ((err = getaddrinfo(sAddrMb, sPort, &hints, &pAddrRoot)) != 0) {
+	    return pCallback->set_socket_error_strerr("CONNECT error: GetAddrInfo: ", err);
+	}
 
 	addrinfo *ptr = pAddrRoot;
 	std::vector<addrinfo*> ipv4;
 	std::vector<addrinfo*> ipv6;
 
-	while (ptr != nullptr)
-	{
-		if (ptr->ai_family == AF_INET)
-			ipv4.push_back(ptr);
-		if (ptr->ai_family == AF_INET6)
-			ipv6.push_back(ptr);
+	while (ptr != nullptr) {
+		if (ptr->ai_family == AF_INET) {
+		    ipv4.push_back(ptr);
+		}
+		if (ptr->ai_family == AF_INET6) {
+		    ipv6.push_back(ptr);
+		}
 		ptr = ptr->ai_next;
 	}
 
-	if (ipv4.empty() && ipv6.empty())
-	{
+	if (ipv4.empty() && ipv6.empty()) {
 		freeaddrinfo(pAddrRoot);
 		pAddrRoot = nullptr;
 		return pCallback->set_socket_error("CONNECT error: I found some DNS records but no IPv4 or IPv6 addresses.");
-	}
-	else if (!ipv4.empty() && ipv6.empty())
-		pSockAddr = ipv4[rand() % ipv4.size()];
-	else if (ipv4.empty() && !ipv6.empty())
-		pSockAddr = ipv6[rand() % ipv6.size()];
-	else if (!ipv4.empty() && !ipv6.empty())
-	{
-		if(jconf::inst()->PreferIpv4())
-			pSockAddr = ipv4[rand() % ipv4.size()];
-		else
-			pSockAddr = ipv6[rand() % ipv6.size()];
+	} else if (!ipv4.empty() && ipv6.empty()) {
+	    pSockAddr = ipv4[rand() % ipv4.size()];
+	} else if (ipv4.empty() && !ipv6.empty()) {
+	    pSockAddr = ipv6[rand() % ipv6.size()];
+	} else if (!ipv4.empty() && !ipv6.empty()) {
+		if(jconf::inst()->PreferIpv4()) {
+		    pSockAddr = ipv4[rand() % ipv4.size()];
+		} else {
+		    pSockAddr = ipv6[rand() % ipv6.size()];
+		}
 	}
 
 	hSocket = socket(pSockAddr->ai_family, pSockAddr->ai_socktype, pSockAddr->ai_protocol);
 
-	if (hSocket == INVALID_SOCKET)
-	{
+	if (hSocket == INVALID_SOCKET) {
 		freeaddrinfo(pAddrRoot);
 		pAddrRoot = nullptr;
 		return pCallback->set_socket_error_strerr("CONNECT error: Socket creation failed ");
@@ -125,44 +121,43 @@ bool plain_socket::set_hostname(const char* sAddr)
 	return true;
 }
 
-bool plain_socket::connect()
-{
+bool plain_socket::connect() {
 	sock_closed = false;
 	int ret = ::connect(hSocket, pSockAddr->ai_addr, (int)pSockAddr->ai_addrlen);
 
 	freeaddrinfo(pAddrRoot);
 	pAddrRoot = nullptr;
 
-	if (ret != 0)
-		return pCallback->set_socket_error_strerr("CONNECT error: ");
-	else
-		return true;
+	if (ret != 0) {
+	    return pCallback->set_socket_error_strerr("CONNECT error: ");
+	} else {
+	    return true;
+	}
 }
 
-int plain_socket::recv(char* buf, unsigned int len)
-{
-	if(sock_closed)
-		return 0;
+int plain_socket::recv(char* buf, unsigned int len) {
+	if(sock_closed) {
+	    return 0;
+	}
 
 	int ret = ::recv(hSocket, buf, len, 0);
 
-	if(ret == 0)
-		pCallback->set_socket_error("RECEIVE error: socket closed");
-	if(ret == SOCKET_ERROR || ret < 0)
-		pCallback->set_socket_error_strerr("RECEIVE error: ");
+	if(ret == 0) {
+	    pCallback->set_socket_error("RECEIVE error: socket closed");
+	}
+	if(ret == SOCKET_ERROR || ret < 0) {
+	    pCallback->set_socket_error_strerr("RECEIVE error: ");
+	}
 
 	return ret;
 }
 
-bool plain_socket::send(const char* buf)
-{
+bool plain_socket::send(const char* buf) {
 	size_t pos = 0;
 	size_t slen = strlen(buf);
-	while (pos != slen)
-	{
+	while (pos != slen) {
 		int ret = ::send(hSocket, buf + pos, slen - pos, 0);
-		if (ret == SOCKET_ERROR)
-		{
+		if (ret == SOCKET_ERROR) {
 			pCallback->set_socket_error_strerr("SEND error: ");
 			return false;
 		}
@@ -173,10 +168,8 @@ bool plain_socket::send(const char* buf)
 	return true;
 }
 
-void plain_socket::close(bool free)
-{
-	if(hSocket != INVALID_SOCKET)
-	{
+void plain_socket::close(bool free) {
+	if(hSocket != INVALID_SOCKET) {
 		sock_closed = true;
 		sock_close(hSocket);
 		hSocket = INVALID_SOCKET;
@@ -332,11 +325,11 @@ bool tls_socket::connect()
 
 	if(strlen(conf_md) == 0)
 	{
-		printer::inst()->print_msg(L1, "TLS fingerprint [%s] %.*s", pCallback->get_pool_addr(), (int)b64_len, b64_md);
+		Printer::inst()->print_msg(L1, "TLS fingerprint [%s] %.*s", pCallback->get_pool_addr(), (int)b64_len, b64_md);
 	}
 	else if(strncmp(b64_md, conf_md, b64_len) != 0)
 	{
-		printer::inst()->print_msg(L0, "FINGERPRINT FAILED CHECK [%s] %.*s was given, %s was configured",
+		Printer::inst()->print_msg(L0, "FINGERPRINT FAILED CHECK [%s] %.*s was given, %s was configured",
 								   pCallback->get_pool_addr(), (int)b64_len, b64_md, conf_md);
 
 		pCallback->set_socket_error("FINGERPRINT FAILED CHECK");

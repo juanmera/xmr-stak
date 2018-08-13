@@ -27,7 +27,7 @@
 
 #include "telemetry.hpp"
 #include "xmrstak/backend/miner_work.hpp"
-#include "xmrstak/backend/globalStates.hpp"
+#include "xmrstak/backend/GlobalStates.hpp"
 #include "xmrstak/backend/backendConnector.hpp"
 #include "xmrstak/backend/iBackend.hpp"
 
@@ -48,21 +48,14 @@
 #define strncasecmp _strnicmp
 #endif // _WIN32
 
-executor::executor()
-{
-}
-
-void executor::push_timed_event(ex_event&& ev, size_t sec)
-{
+void Executor::push_timed_event(ex_event&& ev, size_t sec) {
 	std::unique_lock<std::mutex> lck(timed_event_mutex);
 	lTimedEvents.emplace_back(std::move(ev), sec_to_ticks(sec));
 }
 
-void executor::ex_clock_thd()
-{
+void Executor::ex_clock_thd() {
 	size_t tick = 0;
-	while (true)
-	{
+	while (true) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(size_t(iTickTime)));
 
 		push_event(ex_event(EV_PERF_TICK));
@@ -74,56 +67,53 @@ void executor::ex_clock_thd()
 		// Service timed events
 		std::unique_lock<std::mutex> lck(timed_event_mutex);
 		std::list<timed_event>::iterator ev = lTimedEvents.begin();
-		while (ev != lTimedEvents.end())
-		{
+		while (ev != lTimedEvents.end()) {
 			ev->ticks_left--;
-			if(ev->ticks_left == 0)
-			{
+			if(ev->ticks_left == 0) {
 				push_event(std::move(ev->event));
 				ev = lTimedEvents.erase(ev);
-			}
-			else
+			} else {
 				ev++;
+			}
 		}
 		lck.unlock();
 	}
 }
 
-bool executor::get_live_pools(std::vector<jpsock*>& eval_pools)
-{
+bool Executor::get_live_pools(std::vector<jpsock*>& eval_pools) {
 	size_t limit = jconf::inst()->GetGiveUpLimit();
 	size_t wait = jconf::inst()->GetNetRetry();
 
-	if(limit == 0) limit = (-1); //No limit = limit of 2^64-1
+	if(limit == 0) {
+		limit = (-1); //No limit = limit of 2^64-1
+	}
 	size_t pool_count = 0;
 	size_t over_limit = 0;
-	for(jpsock& pool : pools)
-	{
+	for(jpsock& pool : pools) {
 		// Only eval live pools
 		size_t num, dtime;
 		pool.get_disconnects(num, dtime);
 
-		if(dtime == 0 || (dtime >= wait && num <= limit))
+		if(dtime == 0 || (dtime >= wait && num <= limit)) {
 			eval_pools.emplace_back(&pool);
-
-		pool_count++;
-		if(num > limit)
-			over_limit++;
-	}
-
-	if(eval_pools.size() == 0)
-	{
-		if(xmrstak::globalStates::inst().pool_id != invalid_pool_id)
-		{
-			printer::inst()->print_msg(L0, "All pools are dead. Idling...");
-			auto work = xmrstak::miner_work();
-			xmrstak::pool_data dat;
-			xmrstak::globalStates::inst().switch_work(work, dat);
 		}
 
-		if(over_limit == pool_count)
-		{
-			printer::inst()->print_msg(L0, "All pools are over give up limit. Exiting.");
+		pool_count++;
+		if(num > limit) {
+			over_limit++;
+		}
+	}
+
+	if(eval_pools.size() == 0) {
+		if(xmrstak::GlobalStates::inst().pool_id != invalid_pool_id) {
+			Printer::inst()->print_msg(L0, "All pools are dead. Idling...");
+			auto work = xmrstak::miner_work();
+			xmrstak::pool_data dat;
+			xmrstak::GlobalStates::inst().switch_work(work, dat);
+		}
+
+		if(over_limit == pool_count) {
+			Printer::inst()->print_msg(L0, "All pools are over give up limit. Exiting.");
 			exit(0);
 		}
 
@@ -137,29 +127,25 @@ bool executor::get_live_pools(std::vector<jpsock*>& eval_pools)
  * This event is called by the timer and whenever something relevant happens.
  * The job here is to decide if we want to connect, disconnect, or switch jobs (or do nothing)
  */
-void executor::eval_pool_choice()
-{
+void Executor::eval_pool_choice() {
 	std::vector<jpsock*> eval_pools;
 	eval_pools.reserve(pools.size());
 
-	if(!get_live_pools(eval_pools))
+	if(!get_live_pools(eval_pools)) {
 		return;
+	}
 
 	size_t running = 0;
-	for(jpsock* pool : eval_pools)
-	{
+	for(jpsock* pool : eval_pools) {
 		if(pool->is_running())
 			running++;
 	}
 
 	// Special case - if we are without a pool, connect to all find a live pool asap
-	if(running == 0)
-	{
-		for(jpsock* pool : eval_pools)
-		{
-			if(pool->can_connect())
-			{
-				printer::inst()->print_msg(L1, "Fast-connecting to %s pool ...", pool->get_pool_addr());
+	if(running == 0) {
+		for(jpsock* pool : eval_pools) {
+			if(pool->can_connect()) {
+				Printer::inst()->print_msg(L1, "Fast-connecting to %s pool ...", pool->get_pool_addr());
 				std::string error;
 				if(!pool->connect(error))
 					log_socket_error(pool, std::move(error));
@@ -172,23 +158,20 @@ void executor::eval_pool_choice()
 	std::sort(eval_pools.begin(), eval_pools.end(), [](jpsock* a, jpsock* b) { return b->get_pool_weight(true) < a->get_pool_weight(true); });
 	jpsock* goal = eval_pools[0];
 
-	if(goal->get_pool_id() != xmrstak::globalStates::inst().pool_id)
-	{
-		if(!goal->is_running() && goal->can_connect())
-		{
-			printer::inst()->print_msg(L1, "Connecting to %s pool ...", goal->get_pool_addr());
+	if(goal->get_pool_id() != xmrstak::GlobalStates::inst().pool_id) {
+		if(!goal->is_running() && goal->can_connect()) {
+			Printer::inst()->print_msg(L1, "Connecting to %s pool ...", goal->get_pool_addr());
 
 			std::string error;
-			if(!goal->connect(error))
+			if(!goal->connect(error)) {
 				log_socket_error(goal, std::move(error));
+			}
 			return;
 		}
 
-		if(goal->is_logged_in())
-		{
+		if(goal->is_logged_in()) {
 			pool_job oPoolJob;
-			if(!goal->get_current_job(oPoolJob))
-			{
+			if(!goal->get_current_job(oPoolJob)) {
 				goal->disconnect();
 				return;
 			}
@@ -202,71 +185,64 @@ void executor::eval_pool_choice()
 			last_usr_pool_id = invalid_pool_id;
 			return;
 		}
-	}
-	else
-	{
+	} else {
 		/* All is good - but check if we can do better */
 		std::sort(eval_pools.begin(), eval_pools.end(), [](jpsock* a, jpsock* b) { return b->get_pool_weight(false) < a->get_pool_weight(false); });
 		jpsock* goal2 = eval_pools[0];
 
-		if(goal->get_pool_id() != goal2->get_pool_id())
-		{
-			if(!goal2->is_running() && goal2->can_connect())
-			{
-				printer::inst()->print_msg(L1, "Background-connect to %s pool ...", goal2->get_pool_addr());
+		if(goal->get_pool_id() != goal2->get_pool_id()) {
+			if(!goal2->is_running() && goal2->can_connect()) {
+				Printer::inst()->print_msg(L1, "Background-connect to %s pool ...", goal2->get_pool_addr());
 				std::string error;
-				if(!goal2->connect(error))
+				if(!goal2->connect(error)) {
 					log_socket_error(goal2, std::move(error));
+				}
 				return;
 			}
 		}
 	}
 
-	for(jpsock& pool : pools)
-	{
-		if(goal->is_logged_in() && pool.is_logged_in() && pool.get_pool_id() != goal->get_pool_id())
+	for(jpsock& pool : pools) {
+		if(goal->is_logged_in() && pool.is_logged_in() && pool.get_pool_id() != goal->get_pool_id()) {
 			pool.disconnect(true);
+		}
 	}
 }
 
-void executor::log_socket_error(jpsock* pool, std::string&& sError)
-{
+void Executor::log_socket_error(jpsock* pool, std::string&& sError) {
 	std::string pool_name;
 	pool_name.reserve(128);
 	pool_name.append("[").append(pool->get_pool_addr()).append("] ");
 	sError.insert(0, pool_name);
 
 	vSocketLog.emplace_back(std::move(sError));
-	printer::inst()->print_msg(L1, "SOCKET ERROR - %s", vSocketLog.back().msg.c_str());
+	Printer::inst()->print_msg(L1, "SOCKET ERROR - %s", vSocketLog.back().msg.c_str());
 
 	push_event(ex_event(EV_EVAL_POOL_CHOICE));
 }
 
-void executor::log_result_error(std::string&& sError)
-{
+void Executor::log_result_error(std::string&& sError) {
 	size_t i = 1, ln = vMineResults.size();
-	for(; i < ln; i++)
-	{
-		if(vMineResults[i].compare(sError))
-		{
+	for(; i < ln; i++) {
+		if(vMineResults[i].compare(sError)) {
 			vMineResults[i].increment();
 			break;
 		}
 	}
 
-	if(i == ln) //Not found
+	//Not found
+	if(i == ln) {
 		vMineResults.emplace_back(std::move(sError));
-	else
+	} else {
 		sError.clear();
+	}
 }
 
-void executor::log_result_ok(uint64_t iActualDiff)
-{
+void Executor::log_result_ok(uint64_t iActualDiff) {
 	iPoolHashes += iPoolDiff;
 
 	size_t ln = iTopDiff.size() - 1;
-	if(iActualDiff > iTopDiff[ln])
-	{
+	if(iActualDiff > iTopDiff[ln]) {
 		iTopDiff[ln] = iActualDiff;
 		std::sort(iTopDiff.rbegin(), iTopDiff.rend());
 	}
@@ -274,28 +250,27 @@ void executor::log_result_ok(uint64_t iActualDiff)
 	vMineResults[0].increment();
 }
 
-jpsock* executor::pick_pool_by_id(size_t pool_id)
-{
-	if(pool_id == invalid_pool_id)
+jpsock* Executor::pick_pool_by_id(size_t pool_id) {
+	if(pool_id == invalid_pool_id) {
 		return nullptr;
+	}
 
-	for(jpsock& pool : pools)
-		if(pool.get_pool_id() == pool_id)
+	for(jpsock& pool : pools) {
+		if (pool.get_pool_id() == pool_id) {
 			return &pool;
+		}
+	}
 
 	return nullptr;
 }
 
-void executor::on_sock_ready(size_t pool_id)
-{
+void Executor::on_sock_ready(size_t pool_id) {
 	jpsock* pool = pick_pool_by_id(pool_id);
 
-	printer::inst()->print_msg(L1, "Pool %s connected. Logging in...", pool->get_pool_addr());
+	Printer::inst()->print_msg(L1, "Pool %s connected. Logging in...", pool->get_pool_addr());
 
-	if(!pool->cmd_login())
-	{
-		if(pool->have_call_error())
-		{
+	if(!pool->cmd_login()) {
+		if(pool->have_call_error()) {
 			std::string str = "Login error: " +  pool->get_call_error();
 			log_socket_error(pool, std::move(str));
 		}
@@ -305,7 +280,7 @@ void executor::on_sock_ready(size_t pool_id)
 	}
 }
 
-void executor::on_sock_error(size_t pool_id, std::string&& sError, bool silent)
+void Executor::on_sock_error(size_t pool_id, std::string&& sError, bool silent)
 {
 	jpsock* pool = pick_pool_by_id(pool_id);
 
@@ -320,7 +295,7 @@ void executor::on_sock_error(size_t pool_id, std::string&& sError, bool silent)
 	log_socket_error(pool, std::move(sError));
 }
 
-void executor::on_pool_have_job(size_t pool_id, pool_job& oPoolJob)
+void Executor::on_pool_have_job(size_t pool_id, pool_job& oPoolJob)
 {
 	if(pool_id != current_pool_id)
 		return;
@@ -333,7 +308,7 @@ void executor::on_pool_have_job(size_t pool_id, pool_job& oPoolJob)
 	dat.iSavedNonce = oPoolJob.iSavedNonce;
 	dat.pool_id = pool_id;
 
-	xmrstak::globalStates::inst().switch_work(oWork, dat);
+	xmrstak::GlobalStates::inst().switch_work(oWork, dat);
 
 	if(dat.pool_id != pool_id)
 	{
@@ -345,7 +320,7 @@ void executor::on_pool_have_job(size_t pool_id, pool_job& oPoolJob)
 	if(iPoolDiff != pool->get_current_diff())
 	{
 		iPoolDiff = pool->get_current_diff();
-		printer::inst()->print_msg(L2, "Difficulty changed. Now: %llu.", int_port(iPoolDiff));
+		Printer::inst()->print_msg(L2, "Difficulty changed. Now: %llu.", int_port(iPoolDiff));
 	}
 
 	if(dat.pool_id != pool_id)
@@ -353,16 +328,16 @@ void executor::on_pool_have_job(size_t pool_id, pool_job& oPoolJob)
 		jpsock* prev_pool;
 		if(dat.pool_id != invalid_pool_id && (prev_pool = pick_pool_by_id(dat.pool_id)) != nullptr)
 		{
-			printer::inst()->print_msg(L2, "Pool switched.");
+			Printer::inst()->print_msg(L2, "Pool switched.");
 		}
 		else
-			printer::inst()->print_msg(L2, "Pool logged in.");
+			Printer::inst()->print_msg(L2, "Pool logged in.");
 	}
 	else
-		printer::inst()->print_msg(L3, "New block detected.");
+		Printer::inst()->print_msg(L3, "New block detected.");
 }
 
-void executor::on_miner_result(size_t pool_id, job_result& oResult)
+void Executor::on_miner_result(size_t pool_id, job_result& oResult)
 {
 	jpsock* pool = pick_pool_by_id(pool_id);
 
@@ -381,7 +356,7 @@ void executor::on_miner_result(size_t pool_id, job_result& oResult)
 
 	size_t t_start = get_timestamp_ms();
 	bool bResult = pool->cmd_submit(oResult.sJobID, oResult.iNonce, oResult.bResult,
-		backend_name, backend_hashcount, total_hashcount, jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgo()
+		backend_name, backend_hashcount, total_hashcount, jconf::inst()->GetCurrentCoinSelection().GetDescription().GetMiningAlgo()
 	);
 	size_t t_len = get_timestamp_ms() - t_start;
 
@@ -393,19 +368,19 @@ void executor::on_miner_result(size_t pool_id, job_result& oResult)
 	{
 		uint64_t* targets = (uint64_t*)oResult.bResult;
 		log_result_ok(jpsock::t64_to_diff(targets[3]));
-		printer::inst()->print_msg(L3, "Result accepted by the pool.");
+		Printer::inst()->print_msg(L3, "Result accepted by the pool.");
 	}
 	else
 	{
 		if(!pool->have_sock_error())
 		{
-			printer::inst()->print_msg(L3, "Result rejected by the pool.");
+			Printer::inst()->print_msg(L3, "Result rejected by the pool.");
 
 			std::string error = pool->get_call_error();
 
 			if(strncasecmp(error.c_str(), "Unauthenticated", 15) == 0)
 			{
-				printer::inst()->print_msg(L2, "Your miner was unable to find a share in time. Either the pool difficulty is too high, or the pool timeout is too low.");
+				Printer::inst()->print_msg(L2, "Your miner was unable to find a share in time. Either the pool difficulty is too high, or the pool timeout is too low.");
 				pool->disconnect();
 			}
 
@@ -426,14 +401,14 @@ void disable_sigpipe()
 	sa.sa_handler = SIG_IGN;
 	sa.sa_flags = 0;
 	if (sigaction(SIGPIPE, &sa, 0) == -1)
-		printer::inst()->print_msg(L1, "ERROR: Call to sigaction failed!");
+		Printer::inst()->print_msg(L1, "ERROR: Call to sigaction failed!");
 }
 
 #else
 inline void disable_sigpipe() {}
 #endif
 
-void executor::ex_main()
+void Executor::ex_main()
 {
 	disable_sigpipe();
 
@@ -446,7 +421,7 @@ void executor::ex_main()
 
 	if(pvThreads->size()==0)
 	{
-		printer::inst()->print_msg(L1, "ERROR: No miner backend enabled.");
+		Printer::inst()->print_msg(L1, "ERROR: No miner backend enabled.");
 		win_exit();
 	}
 
@@ -460,14 +435,12 @@ void executor::ex_main()
 		jconf::pool_cfg cfg;
  		jconf::inst()->GetPoolConfig(i, cfg);
 #ifdef CONF_NO_TLS
-		if(cfg.tls)
-		{
-			printer::inst()->print_msg(L1, "ERROR: No miner was compiled without TLS support.");
+		if(cfg.tls) {
+			Printer::inst()->print_msg(L1, "ERROR: No miner was compiled without TLS support.");
 			win_exit();
 		}
 #endif
-		if(!xmrstak::params::inst().poolURL.empty() && xmrstak::params::inst().poolURL == cfg.sPoolAddr)
-		{
+		if(!xmrstak::params::inst().poolURL.empty() && xmrstak::params::inst().poolURL == cfg.sPoolAddr) {
 			auto& params = xmrstak::params::inst();
 			already_have_cli_pool = true;
 
@@ -477,9 +450,9 @@ void executor::ex_main()
 			bool nicehash = cfg.nicehash || params.nicehashMode;
 
 			pools.emplace_back(i+1, cfg.sPoolAddr, wallet, rigid, pwd, 9.9, params.poolUseTls, cfg.tls_fingerprint, nicehash);
-		}
-		else
+		} else {
 			pools.emplace_back(i+1, cfg.sPoolAddr, cfg.sWalletAddr, cfg.sRigId, cfg.sPasswd, cfg.weight, cfg.tls, cfg.tls_fingerprint, cfg.nicehash);
+		}
 	}
 
 	if(!xmrstak::params::inst().poolURL.empty() && !already_have_cli_pool)
@@ -487,7 +460,7 @@ void executor::ex_main()
 		auto& params = xmrstak::params::inst();
 		if(params.poolUsername.empty())
 		{
-			printer::inst()->print_msg(L1, "ERROR: You didn't specify the username / wallet address for %s", xmrstak::params::inst().poolURL.c_str());
+			Printer::inst()->print_msg(L1, "ERROR: You didn't specify the username / wallet address for %s", xmrstak::params::inst().poolURL.c_str());
 			win_exit();
 		}
 
@@ -495,7 +468,7 @@ void executor::ex_main()
 	}
 
 	ex_event ev;
-	std::thread clock_thd(&executor::ex_clock_thd, this);
+	std::thread clock_thd(&Executor::ex_clock_thd, this);
 
 	eval_pool_choice();
 
@@ -503,7 +476,7 @@ void executor::ex_main()
 	// be here even if our first result is a failure
 	vMineResults.emplace_back();
 
-	// If the user requested it, start the autohash printer
+	// If the user requested it, start the autohash Printer
 	if(jconf::inst()->GetVerboseLevel() >= 4)
 		push_timed_event(ex_event(EV_HASHRATE_LOOP), jconf::inst()->GetAutohashTime());
 
@@ -597,7 +570,7 @@ inline const char* hps_format(double h, char* buf, size_t l)
 		return "   (na)";
 }
 
-bool executor::motd_filter_console(std::string& motd)
+bool Executor::motd_filter_console(std::string& motd)
 {
 	if(motd.size() > motd_max_length)
 		return false;
@@ -606,7 +579,7 @@ bool executor::motd_filter_console(std::string& motd)
 	return motd.size() > 0;
 }
 
-void executor::hashrate_report(std::string& out)
+void Executor::hashrate_report(std::string& out)
 {
 	out.reserve(2048 + pvThreads->size() * 64);
 
@@ -725,7 +698,7 @@ char* time_format(char* buf, size_t len, std::chrono::system_clock::time_point t
 	return buf;
 }
 
-void executor::result_report(std::string& out)
+void Executor::result_report(std::string& out)
 {
 	char num[128];
 	char date[32];
@@ -788,7 +761,7 @@ void executor::result_report(std::string& out)
 		out.append("Yay! No errors.\n");
 }
 
-void executor::connection_report(std::string& out)
+void Executor::connection_report(std::string& out)
 {
 	char num[128];
 	char date[32];
@@ -830,7 +803,7 @@ void executor::connection_report(std::string& out)
 		out.append("Yay! No errors.\n");
 }
 
-void executor::print_report(ex_event_name ev)
+void Executor::print_report(ex_event_name ev)
 {
 	std::string out;
 	switch(ev)
@@ -851,5 +824,5 @@ void executor::print_report(ex_event_name ev)
 		break;
 	}
 
-	printer::inst()->print_str(out.c_str());
+	Printer::inst()->print_str(out.c_str());
 }

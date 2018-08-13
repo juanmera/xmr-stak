@@ -3,9 +3,6 @@
 ## Content Overview
 * [Benchmark](#benchmark)
 * [Windows](#windows)
-* [NVIDIA Backend](#nvidia-backend)
-  * [Choose Value for `threads` and `blocks`](#choose-value-for-threads-and-blocks)
-  * [Add more GPUs](#add-more-gpus)
 * [AMD Backend](#amd-backend)
   * [Choose `intensity` and `worksize`](#choose-intensity-and-worksize)
   * [Add more GPUs](#add-more-gpus)
@@ -40,7 +37,7 @@ In the most cases a `worksize` of `16` or `8` is optimal.
 ### Add More GPUs
 
 To add a new GPU you need to add a new config set to `gpu_threads_conf`. `index` is the OpenCL index of the gpu.
-`platform_index`is the index of the OpenCL platform (Intel / AMD / Nvidia).
+`platform_index`is the index of the OpenCL platform AMD.
 If you are unsure of either GPU or platform index value, you can use `clinfo` tool that comes with AMD APP SDK to dump the values.
 
 ```
@@ -84,10 +81,6 @@ export GPU_SINGLE_ALLOC_PERCENT=100
 
 The layout of the hash scratchpad memory can be changed for each GPU with the option `strided_index` in `amd.txt`.
 Try to change the value from the default `true` to `false`.
-
-## CPU Backend
-
-By default the CPU backend can be tuned in the config file `cpu.txt`
 
 ### Choose Value for `low_power_mode`
 

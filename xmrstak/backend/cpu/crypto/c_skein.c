@@ -14,7 +14,6 @@
 #include <string.h>      /* get the memcpy/memset functions */
 #include "c_skein.h"       /* get the Skein API definitions   */
 
-#define DISABLE_UNUSED 0
 
 #ifndef SKEIN_256_NIST_MAX_HASHBITS
 #define SKEIN_256_NIST_MAX_HASHBITS (0)
@@ -29,15 +28,11 @@
 #define  SKEIN_256_STATE_WORDS ( 4)
 #define  SKEIN_512_STATE_WORDS ( 8)
 #define  SKEIN1024_STATE_WORDS (16)
-#define  SKEIN_MAX_STATE_WORDS (16)
 
 #define  SKEIN_256_STATE_BYTES ( 8*SKEIN_256_STATE_WORDS)
 #define  SKEIN_512_STATE_BYTES ( 8*SKEIN_512_STATE_WORDS)
 #define  SKEIN1024_STATE_BYTES ( 8*SKEIN1024_STATE_WORDS)
 
-#define  SKEIN_256_STATE_BITS  (64*SKEIN_256_STATE_WORDS)
-#define  SKEIN_512_STATE_BITS  (64*SKEIN_512_STATE_WORDS)
-#define  SKEIN1024_STATE_BITS  (64*SKEIN1024_STATE_WORDS)
 
 #define  SKEIN_256_BLOCK_BYTES ( 8*SKEIN_256_STATE_WORDS)
 #define  SKEIN_512_BLOCK_BYTES ( 8*SKEIN_512_STATE_WORDS)
@@ -365,31 +360,6 @@ const u64b_t SKEIN_256_IV_256[] =
 	MK_64(0x6A54E920,0xFDE8DA69)
 	};
 
-/* blkSize =  512 bits. hashSize =  128 bits */
-const u64b_t SKEIN_512_IV_128[] =
-	{
-	MK_64(0xA8BC7BF3,0x6FBF9F52),
-	MK_64(0x1E9872CE,0xBD1AF0AA),
-	MK_64(0x309B1790,0xB32190D3),
-	MK_64(0xBCFBB854,0x3F94805C),
-	MK_64(0x0DA61BCD,0x6E31B11B),
-	MK_64(0x1A18EBEA,0xD46A32E3),
-	MK_64(0xA2CC5B18,0xCE84AA82),
-	MK_64(0x6982AB28,0x9D46982D)
-	};
-
-/* blkSize =  512 bits. hashSize =  160 bits */
-const u64b_t SKEIN_512_IV_160[] =
-	{
-	MK_64(0x28B81A2A,0xE013BD91),
-	MK_64(0xC2F11668,0xB5BDF78F),
-	MK_64(0x1760D8F3,0xF6A56F12),
-	MK_64(0x4FB74758,0x8239904F),
-	MK_64(0x21EDE07F,0x7EAF5056),
-	MK_64(0xD908922E,0x63ED70B8),
-	MK_64(0xB8EC76FF,0xECCB52FA),
-	MK_64(0x01A47BB8,0xA3F27A6E)
-	};
 
 /* blkSize =  512 bits. hashSize =  224 bits */
 const u64b_t SKEIN_512_IV_224[] =
@@ -2010,7 +1980,7 @@ static SkeinHashReturn Update(hashState *state, const SkeinBitSequence *data, Sk
 /* finalize hash computation and output the result (hashbitlen bits) */
 static SkeinHashReturn Final(hashState *state, SkeinBitSequence *hashval)
 {
-  Skein_Assert(state->statebits % 256 == 0 && (state->statebits-256) < 1024,FAIL);
+  Skein_Assert(state->statebits % 256 == 0 && (state->statebits-256) < 1024, FAIL);
   switch ((state->statebits >> 8) & 3)
   {
   case 2:  return Skein_512_Final(&state->u.ctx_512,hashval);

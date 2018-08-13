@@ -3,7 +3,7 @@
 
 **XMR-Stak is ready for the POW change of Monero-v7, Aeon-v7, stellite-v4 and Sumukoin-v3**
 
-XMR-Stak is a universal Stratum pool miner. This miner supports CPUs, AMD and NVIDIA gpus and can be used to mine the crypto currency Monero and Aeon.
+XMR-Stak is a universal Stratum pool miner. This miner supports AMD gpus and can be used to mine the crypto currency Monero and Aeon.
 
 ## Video setup guide on Windows
 
@@ -22,7 +22,7 @@ XMR-Stak is a universal Stratum pool miner. This miner supports CPUs, AMD and NV
 
 ## Features
 
-- support all common backends (CPU/x86, AMD-GPU and NVIDIA-GPU)
+- support AMD-GPU
 - support all common OS (Linux, Windows and macOS)
 - supports algorithm cryptonight for Monero (XMR) and cryptonight-light (AEON)
 - easy to use

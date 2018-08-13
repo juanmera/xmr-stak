@@ -1,6 +1,6 @@
 #pragma once
 
-#include "xmrstak/misc/environment.hpp"
+#include "xmrstak/misc/Environment.hpp"
 
 #include <mutex>
 
@@ -16,22 +16,20 @@ void reset_colour();
 
 // on MSVC sizeof(long int) = 4, gcc sizeof(long int) = 8, this is the workaround
 // now we can use %llu on both compilers
-inline long long unsigned int int_port(size_t i)
-{
+inline long long unsigned int int_port(size_t i) {
 	return i;
 }
 
 enum verbosity : size_t { L0 = 0, L1 = 1, L2 = 2, L3 = 3, L4 = 4, LINF = 100};
 
-class printer
-{
+class Printer {
 public:
-	static inline printer* inst()
-	{
-		auto& env = xmrstak::environment::inst();
-		if(env.pPrinter == nullptr)
-			env.pPrinter = new printer;
-		return env.pPrinter;
+	static inline Printer* inst() {
+		auto& env = xmrstak::Environment::inst();
+		if(env.printer == nullptr) {
+            env.printer = new Printer;
+        }
+		return env.printer;
 	};
 
 	inline void set_verbose_level(size_t level) { verbose_level = (verbosity)level; }
@@ -41,7 +39,7 @@ public:
 	bool open_logfile(const char* file);
 
 private:
-	printer();
+	Printer();
 
 	std::mutex print_mutex;
 	verbosity verbose_level;

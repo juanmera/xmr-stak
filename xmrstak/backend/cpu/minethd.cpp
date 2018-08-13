@@ -25,10 +25,9 @@
 
 #include "xmrstak/misc/console.hpp"
 #include "xmrstak/backend/iBackend.hpp"
-#include "xmrstak/backend//globalStates.hpp"
+#include "xmrstak/backend/GlobalStates.hpp"
 #include "xmrstak/misc/configEditor.hpp"
 #include "xmrstak/params.hpp"
-#include "jconf.hpp"
 
 #include "xmrstak/misc/executor.hpp"
 #include "minethd.hpp"
@@ -37,6 +36,7 @@
 #include "xmrstak/backend/miner_work.hpp"
 
 #include <assert.h>
+#include <stdlib.h>
 #include <cmath>
 #include <chrono>
 #include <cstring>
@@ -58,772 +58,85 @@
 
 #endif //_WIN32
 
-namespace xmrstak
-{
-namespace cpu
-{
-
-
-minethd::minethd(miner_work& pWork, size_t iNo, int iMultiway, bool no_prefetch)
-{
-	this->backendType = iBackend::CPU;
-	oWork = pWork;
-	bQuit = 0;
-	iThreadNo = (uint8_t)iNo;
-	iJobNo = 0;
-	bNoPrefetch = no_prefetch;
-
-	std::future<void> order_guard = order_fix.get_future();
-
-	switch (iMultiway)
-	{
-	case 5:
-		oWorkThd = std::thread(&minethd::penta_work_main, this);
-		break;
-	case 4:
-		oWorkThd = std::thread(&minethd::quad_work_main, this);
-		break;
-	case 3:
-		oWorkThd = std::thread(&minethd::triple_work_main, this);
-		break;
-	case 2:
-		oWorkThd = std::thread(&minethd::double_work_main, this);
-		break;
-	case 1:
-	default:
-		oWorkThd = std::thread(&minethd::work_main, this);
-		break;
-	}
-
-	order_guard.wait();
-}
-
-cryptonight_ctx* minethd::minethd_alloc_ctx()
-{
-	cryptonight_ctx* ctx;
-	alloc_msg msg = { 0 };
-
-	switch (::jconf::inst()->GetSlowMemSetting())
-	{
-	case ::jconf::never_use:
-		ctx = cryptonight_alloc_ctx(1, 1, &msg);
-		if (ctx == NULL)
-			printer::inst()->print_msg(L0, "MEMORY ALLOC FAILED: %s", msg.warning);
-		return ctx;
-
-	case ::jconf::no_mlck:
-		ctx = cryptonight_alloc_ctx(1, 0, &msg);
-		if (ctx == NULL)
-			printer::inst()->print_msg(L0, "MEMORY ALLOC FAILED: %s", msg.warning);
-		return ctx;
-
-	case ::jconf::print_warning:
-		ctx = cryptonight_alloc_ctx(1, 1, &msg);
-		if (msg.warning != NULL)
-			printer::inst()->print_msg(L0, "MEMORY ALLOC FAILED: %s", msg.warning);
-		if (ctx == NULL)
-			ctx = cryptonight_alloc_ctx(0, 0, NULL);
-		return ctx;
-
-	case ::jconf::always_use:
-		return cryptonight_alloc_ctx(0, 0, NULL);
-
-	case ::jconf::unknown_value:
-		return NULL; //Shut up compiler
-	}
-
-	return nullptr; //Should never happen
-}
+namespace xmrstak {
+namespace cpu {
 
 static constexpr size_t MAX_N = 5;
-bool minethd::self_test()
-{
+
+cryptonight_ctx* minethd::minethd_alloc_ctx() {
 	alloc_msg msg = { 0 };
-	size_t res;
-	bool fatal = false;
 
-	switch (::jconf::inst()->GetSlowMemSetting())
-	{
-	case ::jconf::never_use:
-		res = cryptonight_init(1, 1, &msg);
-		fatal = true;
-		break;
+	auto ctx = cryptonight_alloc_ctx(&msg);
+	if (ctx == nullptr) {
+		Printer::inst()->print_msg(L0, "MEMORY ALLOC FAILED: %s", msg.warning);
+	}
+	return ctx;
+}
 
-	case ::jconf::no_mlck:
-		res = cryptonight_init(1, 0, &msg);
-		fatal = true;
-		break;
 
-	case ::jconf::print_warning:
-		res = cryptonight_init(1, 1, &msg);
-		break;
+bool minethd::self_test() {
+	alloc_msg msg = { 0 };
 
-	case ::jconf::always_use:
-		res = cryptonight_init(0, 0, &msg);
-		break;
-
-	case ::jconf::unknown_value:
-	default:
-		return false; //Shut up compiler
+	auto res = cryptonight_init(&msg);
+	if(msg.warning != nullptr) {
+	    Printer::inst()->print_msg(L0, "MEMORY INIT ERROR: %s", msg.warning);
 	}
 
-	if(msg.warning != nullptr)
-		printer::inst()->print_msg(L0, "MEMORY INIT ERROR: %s", msg.warning);
-
-	if(res == 0 && fatal)
-		return false;
+	if(res == 0) {
+	    return false;
+	}
 
 	cryptonight_ctx *ctx[MAX_N] = {0};
-	for (int i = 0; i < MAX_N; i++)
-	{
-		if ((ctx[i] = minethd_alloc_ctx()) == nullptr)
-		{
-			for (int j = 0; j < i; j++)
+	for (size_t i = 0; i < MAX_N; i++) {
+		if ((ctx[i] = minethd_alloc_ctx()) == nullptr) {
+			for (size_t j = 0; j < i; j++) {
 				cryptonight_free_ctx(ctx[j]);
+			}
 			return false;
 		}
 	}
 
-	bool bResult = true;
+	auto result = true;
 
-	if(::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgo() == cryptonight)
-	{
+	if(::jconf::inst()->GetCurrentCoinSelection().GetDescription().GetMiningAlgo() == cryptonight) {
 		unsigned char out[32 * MAX_N];
-		cn_hash_fun hashf;
-		cn_hash_fun_multi hashf_multi;
 
-		hashf = func_selector(::jconf::inst()->HaveHardwareAes(), false, xmrstak_algo::cryptonight);
+		auto hashf = func_selector(xmrstak_algo::cryptonight);
 		hashf("This is a test", 14, out, ctx[0]);
-		bResult = memcmp(out, "\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05", 32) == 0;
-
-		hashf = func_selector(::jconf::inst()->HaveHardwareAes(), true, xmrstak_algo::cryptonight);
-		hashf("This is a test", 14, out, ctx[0]);
-		bResult &= memcmp(out, "\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05", 32) == 0;
-
-		hashf_multi = func_multi_selector(2, ::jconf::inst()->HaveHardwareAes(), false, xmrstak_algo::cryptonight);
-		hashf_multi("The quick brown fox jumps over the lazy dogThe quick brown fox jumps over the lazy log", 43, out, ctx);
-		bResult &= memcmp(out, "\x3e\xbb\x7f\x9f\x7d\x27\x3d\x7c\x31\x8d\x86\x94\x77\x55\x0c\xc8\x00\xcf\xb1\x1b\x0c\xad\xb7\xff\xbd\xf6\xf8\x9f\x3a\x47\x1c\x59"
-				"\xb4\x77\xd5\x02\xe4\xd8\x48\x7f\x42\xdf\xe3\x8e\xed\x73\x81\x7a\xda\x91\xb7\xe2\x63\xd2\x91\x71\xb6\x5c\x44\x3a\x01\x2a\x41\x22", 64) == 0;
-
-		hashf_multi = func_multi_selector(2, ::jconf::inst()->HaveHardwareAes(), true, xmrstak_algo::cryptonight);
-		hashf_multi("The quick brown fox jumps over the lazy dogThe quick brown fox jumps over the lazy log", 43, out, ctx);
-		bResult &= memcmp(out, "\x3e\xbb\x7f\x9f\x7d\x27\x3d\x7c\x31\x8d\x86\x94\x77\x55\x0c\xc8\x00\xcf\xb1\x1b\x0c\xad\xb7\xff\xbd\xf6\xf8\x9f\x3a\x47\x1c\x59"
-				"\xb4\x77\xd5\x02\xe4\xd8\x48\x7f\x42\xdf\xe3\x8e\xed\x73\x81\x7a\xda\x91\xb7\xe2\x63\xd2\x91\x71\xb6\x5c\x44\x3a\x01\x2a\x41\x22", 64) == 0;
-
-		hashf_multi = func_multi_selector(3, ::jconf::inst()->HaveHardwareAes(), false, xmrstak_algo::cryptonight);
-		hashf_multi("This is a testThis is a testThis is a test", 14, out, ctx);
-		bResult &= memcmp(out, "\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05"
-				"\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05"
-				"\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05", 96) == 0;
-
-		hashf_multi = func_multi_selector(4, ::jconf::inst()->HaveHardwareAes(), false, xmrstak_algo::cryptonight);
-		hashf_multi("This is a testThis is a testThis is a testThis is a test", 14, out, ctx);
-		bResult &= memcmp(out, "\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05"
-				"\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05"
-				"\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05"
-				"\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05", 128) == 0;
-
-		hashf_multi = func_multi_selector(5, ::jconf::inst()->HaveHardwareAes(), false, xmrstak_algo::cryptonight);
-		hashf_multi("This is a testThis is a testThis is a testThis is a testThis is a test", 14, out, ctx);
-		bResult &= memcmp(out, "\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05"
-				"\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05"
-				"\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05"
-				"\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05"
-				"\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05", 160) == 0;
+		result &= memcmp(out, "\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05", 32) == 0;
 	}
-	else if(::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgo() == cryptonight_lite)
-	{
+	for (auto &c: ctx) {
+        cryptonight_free_ctx(c);
 	}
-	else if(::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgo() == cryptonight_monero)
-	{
+	if(!result) {
+	    Printer::inst()->print_msg(L0, "Cryptonight hash self-test failed. This might be caused by bad compiler optimizations.");
 	}
-	else if(::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgo() == cryptonight_aeon)
-	{
-	}
-	else if(::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgo() == cryptonight_ipbc)
-	{
-	}
-	else if(::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgo() == cryptonight_stellite)
-	{
-	}
-	else if(::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgo() == cryptonight_masari)
-	{
-	}
-	for (int i = 0; i < MAX_N; i++)
-		cryptonight_free_ctx(ctx[i]);
 
-	if(!bResult)
-		printer::inst()->print_msg(L0,
-			"Cryptonight hash self-test failed. This might be caused by bad compiler optimizations.");
-
-	return bResult;
+	return result;
 }
 
-std::vector<iBackend*> minethd::thread_starter(uint32_t threadOffset, miner_work& pWork)
-{
-	std::vector<iBackend*> pvThreads;
-
-	if(!jconf::inst()->parse_config())
-	{
-		win_exit();
-	}
-
-
-	//Launch the requested number of single and double threads, to distribute
-	//load evenly we need to alternate single and double threads
-	size_t i, n = jconf::inst()->GetThreadCount();
-	pvThreads.reserve(n);
-
-	jconf::thd_cfg cfg;
-	for (i = 0; i < n; i++)
-	{
-		jconf::inst()->GetThreadConfig(i, cfg);
-
-		minethd* thd = new minethd(pWork, i + threadOffset, cfg.iMultiway, cfg.bNoPrefetch);
-		pvThreads.push_back(thd);
-	}
-
-	return pvThreads;
-}
-
-minethd::cn_hash_fun minethd::func_selector(bool bHaveAes, bool bNoPrefetch, xmrstak_algo algo)
-{
-	// We have two independent flag bits in the functions
-	// therefore we will build a binary digit and select the
-	// function as a two digit binary
-
-	uint8_t algv;
-	switch(algo)
-	{
-	case cryptonight:
-		algv = 2;
-		break;
+minethd::cn_hash_fun minethd::func_selector(xmrstak_algo algo) {
+    switch(algo) {
 	case cryptonight_lite:
-		algv = 1;
-		break;
-	case cryptonight_monero:
-		algv = 0;
-		break;
-	case cryptonight_heavy:
-		algv = 3;
-		break;
-	case cryptonight_aeon:
-		algv = 4;
-		break;
-	case cryptonight_ipbc:
-		algv = 5;
-		break;
-	case cryptonight_stellite:
-		algv = 6;
-		break;
-	case cryptonight_masari:
-		algv = 7;
-		break;
-	case cryptonight_haven:
-		algv = 8;
-		break;
-	default:
-		algv = 2;
-		break;
-	}
-
-	static const cn_hash_fun func_table[] = {
-		cryptonight_hash<cryptonight_monero, false, false>,
-		cryptonight_hash<cryptonight_monero, true, false>,
-		cryptonight_hash<cryptonight_monero, false, true>,
-		cryptonight_hash<cryptonight_monero, true, true>,
-		cryptonight_hash<cryptonight_lite, false, false>,
-		cryptonight_hash<cryptonight_lite, true, false>,
-		cryptonight_hash<cryptonight_lite, false, true>,
-		cryptonight_hash<cryptonight_lite, true, true>,
-		cryptonight_hash<cryptonight, false, false>,
-		cryptonight_hash<cryptonight, true, false>,
-		cryptonight_hash<cryptonight, false, true>,
-		cryptonight_hash<cryptonight, true, true>,
-		cryptonight_hash<cryptonight_heavy, false, false>,
-		cryptonight_hash<cryptonight_heavy, true, false>,
-		cryptonight_hash<cryptonight_heavy, false, true>,
-		cryptonight_hash<cryptonight_heavy, true, true>,
-		cryptonight_hash<cryptonight_aeon, false, false>,
-		cryptonight_hash<cryptonight_aeon, true, false>,
-		cryptonight_hash<cryptonight_aeon, false, true>,
-		cryptonight_hash<cryptonight_aeon, true, true>,
-		cryptonight_hash<cryptonight_ipbc, false, false>,
-		cryptonight_hash<cryptonight_ipbc, true, false>,
-		cryptonight_hash<cryptonight_ipbc, false, true>,
-		cryptonight_hash<cryptonight_ipbc, true, true>,
-		cryptonight_hash<cryptonight_stellite, false, false>,
-		cryptonight_hash<cryptonight_stellite, true, false>,
-		cryptonight_hash<cryptonight_stellite, false, true>,
-		cryptonight_hash<cryptonight_stellite, true, true>,
-		cryptonight_hash<cryptonight_masari, false, false>,
-		cryptonight_hash<cryptonight_masari, true, false>,
-		cryptonight_hash<cryptonight_masari, false, true>,
-		cryptonight_hash<cryptonight_masari, true, true>,
-		cryptonight_hash<cryptonight_haven, false, false>,
-		cryptonight_hash<cryptonight_haven, true, false>,
-		cryptonight_hash<cryptonight_haven, false, true>,
-		cryptonight_hash<cryptonight_haven, true, true>
-	};
-
-	std::bitset<2> digit;
-	digit.set(0, !bHaveAes);
-	digit.set(1, !bNoPrefetch);
-
-	return func_table[ algv << 2 | digit.to_ulong() ];
-}
-
-void minethd::work_main()
-{
-	order_fix.set_value();
-	std::this_thread::yield();
-
-	cryptonight_ctx* ctx;
-	uint64_t iCount = 0;
-	uint64_t* piHashVal;
-	uint32_t* piNonce;
-	job_result result;
-
-	// start with root algorithm and switch later if fork version is reached
-	auto miner_algo = ::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgoRoot();
-	cn_hash_fun hash_fun = func_selector(::jconf::inst()->HaveHardwareAes(), bNoPrefetch, miner_algo);
-	ctx = minethd_alloc_ctx();
-
-	piHashVal = (uint64_t*)(result.bResult + 24);
-	piNonce = (uint32_t*)(oWork.bWorkBlob + 39);
-	result.iThreadId = iThreadNo;
-
-	uint8_t version = 0;
-	size_t lastPoolId = 0;
-
-	while (bQuit == 0)
-	{
-		if (oWork.bStall)
-		{
-			/* We are stalled here because the executor didn't find a job for us yet,
-			 * either because of network latency, or a socket problem. Since we are
-			 * raison d'etre of this software it us sensible to just wait until we have something
-			 */
-
-			while (globalStates::inst().iGlobalJobNo.load(std::memory_order_relaxed) == iJobNo)
-				std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-			globalStates::inst().consume_work(oWork, iJobNo);
-			continue;
-		}
-
-		size_t nonce_ctr = 0;
-		constexpr size_t nonce_chunk = 4096; // Needs to be a power of 2
-
-		assert(sizeof(job_result::sJobID) == sizeof(pool_job::sJobID));
-		memcpy(result.sJobID, oWork.sJobID, sizeof(job_result::sJobID));
-
-		if(oWork.bNiceHash)
-			result.iNonce = *piNonce;
-
-		uint8_t new_version = oWork.getVersion();
-		if(new_version != version || oWork.iPoolId != lastPoolId)
-		{
-			coinDescription coinDesc = ::jconf::inst()->GetCurrentCoinSelection().GetDescription(oWork.iPoolId);
-			if(new_version >= coinDesc.GetMiningForkVersion())
-			{
-				miner_algo = coinDesc.GetMiningAlgo();
-				hash_fun = func_selector(::jconf::inst()->HaveHardwareAes(), bNoPrefetch, miner_algo);
-			}
-			else
-			{
-				miner_algo = coinDesc.GetMiningAlgoRoot();
-				hash_fun = func_selector(::jconf::inst()->HaveHardwareAes(), bNoPrefetch, miner_algo);
-			}
-			lastPoolId = oWork.iPoolId;
-			version = new_version;
-		}
-
-		while(globalStates::inst().iGlobalJobNo.load(std::memory_order_relaxed) == iJobNo)
-		{
-			if ((iCount++ & 0xF) == 0) //Store stats every 16 hashes
-			{
-				uint64_t iStamp = get_timestamp_ms();
-				iHashCount.store(iCount, std::memory_order_relaxed);
-				iTimestamp.store(iStamp, std::memory_order_relaxed);
-			}
-
-			if((nonce_ctr++ & (nonce_chunk-1)) == 0)
-			{
-				globalStates::inst().calc_start_nonce(result.iNonce, oWork.bNiceHash, nonce_chunk);
-				// check if the job is still valid, there is a small posibility that the job is switched
-				if(globalStates::inst().iGlobalJobNo.load(std::memory_order_relaxed) != iJobNo)
-					break;
-			}
-
-			*piNonce = result.iNonce;
-
-			hash_fun(oWork.bWorkBlob, oWork.iWorkSize, result.bResult, ctx);
-
-			if (*piHashVal < oWork.iTarget)
-				executor::inst()->push_event(ex_event(result, oWork.iPoolId));
-			result.iNonce++;
-
-			std::this_thread::yield();
-		}
-
-		globalStates::inst().consume_work(oWork, iJobNo);
-	}
-
-	cryptonight_free_ctx(ctx);
-}
-
-minethd::cn_hash_fun_multi minethd::func_multi_selector(size_t N, bool bHaveAes, bool bNoPrefetch, xmrstak_algo algo)
-{
-	// We have two independent flag bits in the functions
-	// therefore we will build a binary digit and select the
-	// function as a two digit binary
-
-	uint8_t algv;
-	switch(algo)
-	{
+        return cryptonight_hash<cryptonight_lite>;
 	case cryptonight:
-		algv = 2;
-		break;
-	case cryptonight_lite:
-		algv = 1;
-		break;
-	case cryptonight_monero:
-		algv = 0;
-		break;
+        return cryptonight_hash<cryptonight>;
 	case cryptonight_heavy:
-		algv = 3;
-		break;
+        return cryptonight_hash<cryptonight_heavy>;
 	case cryptonight_aeon:
-		algv = 4;
-		break;
+        return cryptonight_hash<cryptonight_aeon>;
 	case cryptonight_ipbc:
-		algv = 5;
-		break;
+        return cryptonight_hash<cryptonight_ipbc>;
 	case cryptonight_stellite:
-		algv = 6;
-		break;
+        return cryptonight_hash<cryptonight_stellite>;
 	case cryptonight_masari:
-		algv = 7;
-		break;
+        return cryptonight_hash<cryptonight_masari>;
 	case cryptonight_haven:
-		algv = 8;
-		break;
-	default:
-		algv = 2;
-		break;
+        return cryptonight_hash<cryptonight_haven>;
 	}
-
-	static const cn_hash_fun_multi func_table[] = {
-		cryptonight_double_hash<cryptonight_monero, false, false>,
-		cryptonight_double_hash<cryptonight_monero, true, false>,
-		cryptonight_double_hash<cryptonight_monero, false, true>,
-		cryptonight_double_hash<cryptonight_monero, true, true>,
-		cryptonight_triple_hash<cryptonight_monero, false, false>,
-		cryptonight_triple_hash<cryptonight_monero, true, false>,
-		cryptonight_triple_hash<cryptonight_monero, false, true>,
-		cryptonight_triple_hash<cryptonight_monero, true, true>,
-		cryptonight_quad_hash<cryptonight_monero, false, false>,
-		cryptonight_quad_hash<cryptonight_monero, true, false>,
-		cryptonight_quad_hash<cryptonight_monero, false, true>,
-		cryptonight_quad_hash<cryptonight_monero, true, true>,
-		cryptonight_penta_hash<cryptonight_monero, false, false>,
-		cryptonight_penta_hash<cryptonight_monero, true, false>,
-		cryptonight_penta_hash<cryptonight_monero, false, true>,
-		cryptonight_penta_hash<cryptonight_monero, true, true>,
-
-		cryptonight_double_hash<cryptonight_lite, false, false>,
-		cryptonight_double_hash<cryptonight_lite, true, false>,
-		cryptonight_double_hash<cryptonight_lite, false, true>,
-		cryptonight_double_hash<cryptonight_lite, true, true>,
-		cryptonight_triple_hash<cryptonight_lite, false, false>,
-		cryptonight_triple_hash<cryptonight_lite, true, false>,
-		cryptonight_triple_hash<cryptonight_lite, false, true>,
-		cryptonight_triple_hash<cryptonight_lite, true, true>,
-		cryptonight_quad_hash<cryptonight_lite, false, false>,
-		cryptonight_quad_hash<cryptonight_lite, true, false>,
-		cryptonight_quad_hash<cryptonight_lite, false, true>,
-		cryptonight_quad_hash<cryptonight_lite, true, true>,
-		cryptonight_penta_hash<cryptonight_lite, false, false>,
-		cryptonight_penta_hash<cryptonight_lite, true, false>,
-		cryptonight_penta_hash<cryptonight_lite, false, true>,
-		cryptonight_penta_hash<cryptonight_lite, true, true>,
-
-		cryptonight_double_hash<cryptonight, false, false>,
-		cryptonight_double_hash<cryptonight, true, false>,
-		cryptonight_double_hash<cryptonight, false, true>,
-		cryptonight_double_hash<cryptonight, true, true>,
-		cryptonight_triple_hash<cryptonight, false, false>,
-		cryptonight_triple_hash<cryptonight, true, false>,
-		cryptonight_triple_hash<cryptonight, false, true>,
-		cryptonight_triple_hash<cryptonight, true, true>,
-		cryptonight_quad_hash<cryptonight, false, false>,
-		cryptonight_quad_hash<cryptonight, true, false>,
-		cryptonight_quad_hash<cryptonight, false, true>,
-		cryptonight_quad_hash<cryptonight, true, true>,
-		cryptonight_penta_hash<cryptonight, false, false>,
-		cryptonight_penta_hash<cryptonight, true, false>,
-		cryptonight_penta_hash<cryptonight, false, true>,
-		cryptonight_penta_hash<cryptonight, true, true>,
-
-		cryptonight_double_hash<cryptonight_heavy, false, false>,
-		cryptonight_double_hash<cryptonight_heavy, true, false>,
-		cryptonight_double_hash<cryptonight_heavy, false, true>,
-		cryptonight_double_hash<cryptonight_heavy, true, true>,
-		cryptonight_triple_hash<cryptonight_heavy, false, false>,
-		cryptonight_triple_hash<cryptonight_heavy, true, false>,
-		cryptonight_triple_hash<cryptonight_heavy, false, true>,
-		cryptonight_triple_hash<cryptonight_heavy, true, true>,
-		cryptonight_quad_hash<cryptonight_heavy, false, false>,
-		cryptonight_quad_hash<cryptonight_heavy, true, false>,
-		cryptonight_quad_hash<cryptonight_heavy, false, true>,
-		cryptonight_quad_hash<cryptonight_heavy, true, true>,
-		cryptonight_penta_hash<cryptonight_heavy, false, false>,
-		cryptonight_penta_hash<cryptonight_heavy, true, false>,
-		cryptonight_penta_hash<cryptonight_heavy, false, true>,
-		cryptonight_penta_hash<cryptonight_heavy, true, true>,
-
-		cryptonight_double_hash<cryptonight_aeon, false, false>,
-		cryptonight_double_hash<cryptonight_aeon, true, false>,
-		cryptonight_double_hash<cryptonight_aeon, false, true>,
-		cryptonight_double_hash<cryptonight_aeon, true, true>,
-		cryptonight_triple_hash<cryptonight_aeon, false, false>,
-		cryptonight_triple_hash<cryptonight_aeon, true, false>,
-		cryptonight_triple_hash<cryptonight_aeon, false, true>,
-		cryptonight_triple_hash<cryptonight_aeon, true, true>,
-		cryptonight_quad_hash<cryptonight_aeon, false, false>,
-		cryptonight_quad_hash<cryptonight_aeon, true, false>,
-		cryptonight_quad_hash<cryptonight_aeon, false, true>,
-		cryptonight_quad_hash<cryptonight_aeon, true, true>,
-		cryptonight_penta_hash<cryptonight_aeon, false, false>,
-		cryptonight_penta_hash<cryptonight_aeon, true, false>,
-		cryptonight_penta_hash<cryptonight_aeon, false, true>,
-		cryptonight_penta_hash<cryptonight_aeon, true, true>,
-
-		cryptonight_double_hash<cryptonight_ipbc, false, false>,
-		cryptonight_double_hash<cryptonight_ipbc, true, false>,
-		cryptonight_double_hash<cryptonight_ipbc, false, true>,
-		cryptonight_double_hash<cryptonight_ipbc, true, true>,
-		cryptonight_triple_hash<cryptonight_ipbc, false, false>,
-		cryptonight_triple_hash<cryptonight_ipbc, true, false>,
-		cryptonight_triple_hash<cryptonight_ipbc, false, true>,
-		cryptonight_triple_hash<cryptonight_ipbc, true, true>,
-		cryptonight_quad_hash<cryptonight_ipbc, false, false>,
-		cryptonight_quad_hash<cryptonight_ipbc, true, false>,
-		cryptonight_quad_hash<cryptonight_ipbc, false, true>,
-		cryptonight_quad_hash<cryptonight_ipbc, true, true>,
-		cryptonight_penta_hash<cryptonight_ipbc, false, false>,
-		cryptonight_penta_hash<cryptonight_ipbc, true, false>,
-		cryptonight_penta_hash<cryptonight_ipbc, false, true>,
-		cryptonight_penta_hash<cryptonight_ipbc, true, true>,
-
-		cryptonight_double_hash<cryptonight_stellite, false, false>,
-		cryptonight_double_hash<cryptonight_stellite, true, false>,
-		cryptonight_double_hash<cryptonight_stellite, false, true>,
-		cryptonight_double_hash<cryptonight_stellite, true, true>,
-		cryptonight_triple_hash<cryptonight_stellite, false, false>,
-		cryptonight_triple_hash<cryptonight_stellite, true, false>,
-		cryptonight_triple_hash<cryptonight_stellite, false, true>,
-		cryptonight_triple_hash<cryptonight_stellite, true, true>,
-		cryptonight_quad_hash<cryptonight_stellite, false, false>,
-		cryptonight_quad_hash<cryptonight_stellite, true, false>,
-		cryptonight_quad_hash<cryptonight_stellite, false, true>,
-		cryptonight_quad_hash<cryptonight_stellite, true, true>,
-		cryptonight_penta_hash<cryptonight_stellite, false, false>,
-		cryptonight_penta_hash<cryptonight_stellite, true, false>,
-		cryptonight_penta_hash<cryptonight_stellite, false, true>,
-		cryptonight_penta_hash<cryptonight_stellite, true, true>,
-
-		cryptonight_double_hash<cryptonight_masari, false, false>,
-		cryptonight_double_hash<cryptonight_masari, true, false>,
-		cryptonight_double_hash<cryptonight_masari, false, true>,
-		cryptonight_double_hash<cryptonight_masari, true, true>,
-		cryptonight_triple_hash<cryptonight_masari, false, false>,
-		cryptonight_triple_hash<cryptonight_masari, true, false>,
-		cryptonight_triple_hash<cryptonight_masari, false, true>,
-		cryptonight_triple_hash<cryptonight_masari, true, true>,
-		cryptonight_quad_hash<cryptonight_masari, false, false>,
-		cryptonight_quad_hash<cryptonight_masari, true, false>,
-		cryptonight_quad_hash<cryptonight_masari, false, true>,
-		cryptonight_quad_hash<cryptonight_masari, true, true>,
-		cryptonight_penta_hash<cryptonight_masari, false, false>,
-		cryptonight_penta_hash<cryptonight_masari, true, false>,
-		cryptonight_penta_hash<cryptonight_masari, false, true>,
-		cryptonight_penta_hash<cryptonight_masari, true, true>,
-		
-		cryptonight_double_hash<cryptonight_haven, false, false>,
-		cryptonight_double_hash<cryptonight_haven, true, false>,
-		cryptonight_double_hash<cryptonight_haven, false, true>,
-		cryptonight_double_hash<cryptonight_haven, true, true>,
-		cryptonight_triple_hash<cryptonight_haven, false, false>,
-		cryptonight_triple_hash<cryptonight_haven, true, false>,
-		cryptonight_triple_hash<cryptonight_haven, false, true>,
-		cryptonight_triple_hash<cryptonight_haven, true, true>,
-		cryptonight_quad_hash<cryptonight_haven, false, false>,
-		cryptonight_quad_hash<cryptonight_haven, true, false>,
-		cryptonight_quad_hash<cryptonight_haven, false, true>,
-		cryptonight_quad_hash<cryptonight_haven, true, true>,
-		cryptonight_penta_hash<cryptonight_haven, false, false>,
-		cryptonight_penta_hash<cryptonight_haven, true, false>,
-		cryptonight_penta_hash<cryptonight_haven, false, true>,
-		cryptonight_penta_hash<cryptonight_haven, true, true>
-
-	};
-
-	std::bitset<2> digit;
-	digit.set(0, !bHaveAes);
-	digit.set(1, !bNoPrefetch);
-
-	return func_table[algv << 4 | (N-2) << 2 | digit.to_ulong()];
+    return cryptonight_hash<cryptonight_monero>;
 }
 
-void minethd::double_work_main()
-{
-	multiway_work_main<2u>();
-}
-
-void minethd::triple_work_main()
-{
-	multiway_work_main<3u>();
-}
-
-void minethd::quad_work_main()
-{
-	multiway_work_main<4u>();
-}
-
-void minethd::penta_work_main()
-{
-	multiway_work_main<5u>();
-}
-
-template<size_t N>
-void minethd::prep_multiway_work(uint8_t *bWorkBlob, uint32_t **piNonce)
-{
-	for (size_t i = 0; i < N; i++)
-	{
-		memcpy(bWorkBlob + oWork.iWorkSize * i, oWork.bWorkBlob, oWork.iWorkSize);
-		if (i > 0)
-			piNonce[i] = (uint32_t*)(bWorkBlob + oWork.iWorkSize * i + 39);
-	}
-}
-
-template<uint32_t N>
-void minethd::multiway_work_main()
-{
-	order_fix.set_value();
-	std::this_thread::yield();
-
-	cryptonight_ctx *ctx[MAX_N];
-	uint64_t iCount = 0;
-	uint64_t *piHashVal[MAX_N];
-	uint32_t *piNonce[MAX_N];
-	uint8_t bHashOut[MAX_N * 32];
-	uint8_t bWorkBlob[sizeof(miner_work::bWorkBlob) * MAX_N];
-	uint32_t iNonce;
-
-	for (size_t i = 0; i < N; i++)
-	{
-		ctx[i] = minethd_alloc_ctx();
-		piHashVal[i] = (uint64_t*)(bHashOut + 32 * i + 24);
-		piNonce[i] = (i == 0) ? (uint32_t*)(bWorkBlob + 39) : nullptr;
-	}
-
-	if(!oWork.bStall)
-		prep_multiway_work<N>(bWorkBlob, piNonce);
-
-	globalStates::inst().iConsumeCnt++;
-
-	// start with root algorithm and switch later if fork version is reached
-	auto miner_algo = ::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgoRoot();
-	cn_hash_fun_multi hash_fun_multi = func_multi_selector(N, ::jconf::inst()->HaveHardwareAes(), bNoPrefetch, miner_algo);
-	uint8_t version = 0;
-	size_t lastPoolId = 0;
-
-	while (bQuit == 0)
-	{
-		if (oWork.bStall)
-		{
-			/*	We are stalled here because the executor didn't find a job for us yet,
-			either because of network latency, or a socket problem. Since we are
-			raison d'etre of this software it us sensible to just wait until we have something*/
-
-			while (globalStates::inst().iGlobalJobNo.load(std::memory_order_relaxed) == iJobNo)
-				std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-			globalStates::inst().consume_work(oWork, iJobNo);
-			prep_multiway_work<N>(bWorkBlob, piNonce);
-			continue;
-		}
-
-		constexpr uint32_t nonce_chunk = 4096;
-		int64_t nonce_ctr = 0;
-
-		assert(sizeof(job_result::sJobID) == sizeof(pool_job::sJobID));
-
-		if(oWork.bNiceHash)
-			iNonce = *piNonce[0];
-
-		uint8_t new_version = oWork.getVersion();
-		if(new_version != version || oWork.iPoolId != lastPoolId)
-		{
-			coinDescription coinDesc = ::jconf::inst()->GetCurrentCoinSelection().GetDescription(oWork.iPoolId);
-			if(new_version >= coinDesc.GetMiningForkVersion())
-			{
-				miner_algo = coinDesc.GetMiningAlgo();
-				hash_fun_multi = func_multi_selector(N, ::jconf::inst()->HaveHardwareAes(), bNoPrefetch, miner_algo);
-			}
-			else
-			{
-				miner_algo = coinDesc.GetMiningAlgoRoot();
-				hash_fun_multi = func_multi_selector(N, ::jconf::inst()->HaveHardwareAes(), bNoPrefetch, miner_algo);
-			}
-			lastPoolId = oWork.iPoolId;
-			version = new_version;
-		}
-
-		while (globalStates::inst().iGlobalJobNo.load(std::memory_order_relaxed) == iJobNo)
-		{
-			if ((iCount++ & 0x7) == 0)  //Store stats every 8*N hashes
-			{
-				uint64_t iStamp = get_timestamp_ms();
-				iHashCount.store(iCount * N, std::memory_order_relaxed);
-				iTimestamp.store(iStamp, std::memory_order_relaxed);
-			}
-
-			nonce_ctr -= N;
-			if(nonce_ctr <= 0)
-			{
-				globalStates::inst().calc_start_nonce(iNonce, oWork.bNiceHash, nonce_chunk);
-				nonce_ctr = nonce_chunk;
-				// check if the job is still valid, there is a small posibility that the job is switched
-				if(globalStates::inst().iGlobalJobNo.load(std::memory_order_relaxed) != iJobNo)
-					break;
-			}
-
-			for (size_t i = 0; i < N; i++)
-				*piNonce[i] = iNonce++;
-
-			hash_fun_multi(bWorkBlob, oWork.iWorkSize, bHashOut, ctx);
-
-			for (size_t i = 0; i < N; i++)
-			{
-				if (*piHashVal[i] < oWork.iTarget)
-				{
-					executor::inst()->push_event(ex_event(job_result(oWork.sJobID, iNonce - N + i, bHashOut + 32 * i, iThreadNo), oWork.iPoolId));
-				}
-			}
-
-			std::this_thread::yield();
-		}
-
-		globalStates::inst().consume_work(oWork, iJobNo);
-		prep_multiway_work<N>(bWorkBlob, piNonce);
-	}
-
-	for (int i = 0; i < N; i++)
-		cryptonight_free_ctx(ctx[i]);
-}
 
 } // namespace cpu
 } // namespace xmrstak
