@@ -111,7 +111,6 @@ bool minethd::self_test() {
 	if(!result) {
 	    Printer::inst()->print_msg(L0, "Cryptonight hash self-test failed. This might be caused by bad compiler optimizations.");
 	}
-
 	return result;
 }
 
@@ -136,7 +135,6 @@ minethd::cn_hash_fun minethd::func_selector(xmrstak_algo algo) {
 	}
     return cryptonight_hash<cryptonight_monero>;
 }
-
 
 } // namespace cpu
 } // namespace xmrstak

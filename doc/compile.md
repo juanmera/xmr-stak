@@ -22,8 +22,8 @@ There are two easy ways to set variables for `cmake` to configure *xmr-stak*
   - edit your options
   - end the GUI by pressing the key `c`(create) and than `g`(generate)
 - set Options on the command line
-  - enable a option: `cmake .. -DNAME_OF_THE_OPTION=ON`
-  - disable a option `cmake .. -DNAME_OF_THE_OPTION=OFF`
+  - enable an option: `cmake .. -DNAME_OF_THE_OPTION=ON`
+  - disable an option `cmake .. -DNAME_OF_THE_OPTION=OFF`
   - set a value `cmake .. -DNAME_OF_THE_OPTION=value`
 
 After the configuration you need to compile the miner, follow the guide for your platform:
@@ -42,7 +42,7 @@ After the configuration you need to compile the miner, follow the guide for your
 - `CMAKE_BUILD_TYPE` set the build type
   - valid options: `Release` or `Debug`
   - you should always keep `Release` for your productive miners
-- `OpenSSL_ENABLE` allow to disable/enable the dependency *OpenSSL*
+- `OpenSSL_ENABLE` allows to disable/enable the dependency *OpenSSL*
   - it is not possible to connect to a *https* secured pool if option is disabled: `cmake .. -DOpenSSL_ENABLE=OFF`
 - `XMR-STAK_COMPILE` select the CPU compute architecture (default: native)
   - native means the miner binary can be used only on the system where it is compiled but will archive the highest hash rate
@@ -50,4 +50,4 @@ After the configuration you need to compile the miner, follow the guide for your
 
 ## AMD Build Options
 
-- `OpenCL_ENABLE` allow to disable/enable the AMD backend of the miner
+- `OpenCL_ENABLE` allows to disable/enable the AMD backend of the miner

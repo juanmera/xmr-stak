@@ -1,5 +1,5 @@
 ###### fireice-uk's and psychocrypt's
-# XMR-Stak - Monero/Aeon All-in-One Mining Software
+# XMR-Stak - Cryptonight All-in-One Mining Software
 
 **XMR-Stak is ready for the POW change of Monero-v7, Aeon-v7, stellite-v4 and Sumukoin-v3**
 
@@ -37,22 +37,27 @@ Besides [Monero](https://getmonero.org), following coins can be mined using this
 
 - [Aeon](http://www.aeon.cash)
 - [BBSCoin](https://www.bbscoin.xyz)
-- [Croat](https://croat.cat)
-- [Edollar](https://edollar.cash)
-- [Electroneum](https://electroneum.com)
 - [Graft](https://www.graft.network)
 - [Haven](https://havenprotocol.com)
 - [Intense](https://intensecoin.com)
-- [IPBC](https://ipbc.io)
-- [Karbo](https://karbo.io)
 - [Masari](https://getmasari.org)
-- [Sumokoin](https://www.sumokoin.org)
+- [Ryo](https://ryo-currency.com)
 - [TurtleCoin](https://turtlecoin.lol)
 
 If your prefered coin is not listed, you can chose one of the following algorithms:
 
-- Cryptonight - 2 MiB scratchpad memory
-- Cryptonight-light - 1 MiB scratchpad memory
+- 1MiB scratchpad memory
+    - cryptonight_lite
+    - cryptonight_lite_v7
+    - cryptonight_lite_v7_xor (algorithm used by ipbc)
+- 2MiB scratchpad memory
+    - cryptonight
+    - cryptonight_masari
+    - cryptonight_v7
+    - cryptonight_v7_stellite
+- 4MiB scratchpad memory
+    - cryptonight_haven
+    - cryptonight_heavy
 
 Please note, this list is not complete, and is not an endorsement.
 

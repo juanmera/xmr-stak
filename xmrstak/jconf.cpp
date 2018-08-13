@@ -52,7 +52,7 @@ using namespace rapidjson;
  */
 enum configEnum {
 	aPoolList, sCurrency, bTlsSecureAlgo, iCallTimeout, iNetRetry, iGiveUpLimit, iVerboseLevel, bPrintMotd, iAutohashTime,
-	bFlushStdout, bDaemonMode, sOutputFile, bPreferIpv4, bAesOverride, sUseSlowMem
+	bDaemonMode, sOutputFile, bPreferIpv4, bAesOverride, sUseSlowMem
 };
 
 struct configVal {
@@ -73,7 +73,6 @@ configVal oConfigValues[] = {
 	{ iVerboseLevel, "verbose_level", kNumberType },
 	{ bPrintMotd, "print_motd", kTrueType },
 	{ iAutohashTime, "h_print_time", kNumberType },
-	{ bFlushStdout, "flush_stdout", kTrueType},
 	{ bDaemonMode, "daemon_mode", kTrueType },
 	{ sOutputFile, "output_file", kStringType },
 	{ bPreferIpv4, "prefer_ipv4", kTrueType },
@@ -179,14 +178,14 @@ bool jconf::GetPoolConfig(size_t id, pool_cfg& cfg)
 	cfg.raw_weight = jwt->GetUint64();
 
 	size_t dlt = wt_max - wt_min;
-	if(dlt != 0)
-	{
+	if(dlt != 0) {
 		/* Normalise weights between 0 and 9.8 */
 		cfg.weight = double(cfg.raw_weight - wt_min) * 9.8;
 		cfg.weight /= dlt;
-	}
-	else /* Special case - user selected same weights for everything */
+	} else {
+		/* Special case - user selected same weights for everything */
 		cfg.weight = 0.0;
+	}
 	return true;
 }
 
@@ -560,16 +559,6 @@ bool jconf::parse_config(const char* sFilename, const char* sFilenamePools)
 	}
 #endif // _WIN32
 
-	if (prv->configValues[bFlushStdout]->IsBool())
-	{
-		bool bflush = prv->configValues[bFlushStdout]->GetBool();
-		Printer::inst()->set_flush_stdout(bflush);
-		if (bflush)
-		{
-			Printer::inst()->print_msg(L0, "Flush stdout forced.");
-		}
-	}
-
 	std::string ctmp = GetMiningCoin();
 	std::transform(ctmp.begin(), ctmp.end(), ctmp.begin(), ::tolower);
 
@@ -581,22 +570,19 @@ bool jconf::parse_config(const char* sFilename, const char* sFilenamePools)
 
 	for(size_t i=0; i < coin_algo_size; i++)
 	{
-		if(ctmp == "monero")
-		{
+		if(ctmp == "monero") {
 			Printer::inst()->print_msg(L0, "You entered Monero as coin name. Monero will hard-fork the PoW.\nThis means it will stop being compatible with other cryptonight coins.\n"
 				"Please use monero7 (support auto switch to new POW) if you want to mine Monero, or name the coin that you want to mine.");
 			return false;
 		}
 
-		if(ctmp == coins[i].coin_name)
-		{
+		if(ctmp == coins[i].coin_name) {
 			currentCoin = coins[i];
 			break;
 		}
 	}
 
-	if(currentCoin.GetDescription().GetMiningAlgo() == invalid_algo)
-	{
+	if(currentCoin.GetDescription().GetMiningAlgo() == invalid_algo) {
 		std::string cl;
 		GetAlgoList(cl);
 		Printer::inst()->print_msg(L0, "Unrecognised coin '%s', your options are:\n%s", ctmp.c_str(), cl.c_str());

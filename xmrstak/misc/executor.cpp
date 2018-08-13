@@ -356,7 +356,7 @@ void Executor::on_miner_result(size_t pool_id, job_result& oResult)
 
 	size_t t_start = get_timestamp_ms();
 	bool bResult = pool->cmd_submit(oResult.sJobID, oResult.iNonce, oResult.bResult,
-		backend_name, backend_hashcount, total_hashcount, jconf::inst()->GetCurrentCoinSelection().GetDescription().GetMiningAlgo()
+		backend_name, backend_hashcount, total_hashcount, oResult.algorithm
 	);
 	size_t t_len = get_timestamp_ms() - t_start;
 
