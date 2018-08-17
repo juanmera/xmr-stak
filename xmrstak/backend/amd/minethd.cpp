@@ -41,13 +41,10 @@
 #include <thread>
 #include <vector>
 
-namespace xmrstak
-{
-namespace amd
-{
+namespace xmrstak {
+namespace amd {
 
-minethd::minethd(miner_work &pWork, size_t iNo, GpuContext *ctx)
-{
+minethd::minethd(miner_work &pWork, size_t iNo, GpuContext *ctx) {
 	this->backendType = iBackend::AMD;
 	oWork = pWork;
 	bQuit = 0;
@@ -75,16 +72,14 @@ std::vector<iBackend*>* xmrstak_start_backend(uint32_t threadOffset, miner_work&
 }
 } // extern "C"
 
-bool minethd::init_gpus()
-{
+bool minethd::init_gpus() {
 	size_t i, n = jconf::inst()->GetThreadCount();
 
 	Printer::inst()->print_msg(L1, "Compiling code and initializing GPUs. This will take a while...");
 	vGpuData.resize(n);
 
 	jconf::thd_cfg cfg;
-	for(i = 0; i < n; i++)
-	{
+	for(i = 0; i < n; i++) {
 		jconf::inst()->GetThreadConfig(i, cfg);
 		vGpuData[i].deviceIdx = cfg.index;
 		vGpuData[i].rawIntensity = cfg.intensity;
@@ -99,26 +94,22 @@ bool minethd::init_gpus()
 
 std::vector<GpuContext> minethd::vGpuData;
 
-std::vector<iBackend*>* minethd::thread_starter(uint32_t threadOffset, miner_work& pWork)
-{
+std::vector<iBackend*>* minethd::thread_starter(uint32_t threadOffset, miner_work& pWork) {
 	std::vector<iBackend*>* pvThreads = new std::vector<iBackend*>();
 
-	if(!configEditor::file_exist(params::inst().configFileAMD))
-	{
+	if(!configEditor::file_exist(params::inst().configFileAMD)) {
 		autoAdjust adjust;
 		if(!adjust.printConfig())
 			return pvThreads;
 	}
 
-	if(!jconf::inst()->parse_config())
-	{
+	if(!jconf::inst()->parse_config()) {
 		win_exit();
 	}
 
 	// \ todo get device count and exit if no opencl device
 
-	if(!init_gpus())
-	{
+	if(!init_gpus()) {
 		Printer::inst()->print_msg(L1, "WARNING: AMD device not found");
 		return pvThreads;
 	}
@@ -127,8 +118,7 @@ std::vector<iBackend*>* minethd::thread_starter(uint32_t threadOffset, miner_wor
 	pvThreads->reserve(n);
 
 	jconf::thd_cfg cfg;
-	for (i = 0; i < n; i++)
-	{
+	for (i = 0; i < n; i++) {
 		jconf::inst()->GetThreadConfig(i, cfg);
 
 		minethd* thd = new minethd(pWork, i + threadOffset, &vGpuData[i]);

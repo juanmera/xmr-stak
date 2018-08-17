@@ -15,8 +15,7 @@ struct params {
 
 	std::string binaryName;
 	std::string executablePrefix;
-	bool useAMD;
-	bool AMDCache;
+	bool cache;
 	// user selected OpenCL vendor
 	std::string openCLVendor;
 
@@ -47,8 +46,7 @@ struct params {
 	params() :
 		binaryName("xmr-stak"),
 		executablePrefix(""),
-		useAMD(true),
-		AMDCache(true),
+		cache(true),
 		openCLVendor("AMD"),
 		configFile("config.txt"),
 		configFilePools("pools.txt"),

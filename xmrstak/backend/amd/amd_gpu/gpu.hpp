@@ -19,14 +19,14 @@
 
 
 
-struct GpuContext
-{
+struct GpuContext {
 	/*Input vars*/
 	size_t deviceIdx;
 	size_t rawIntensity;
 	size_t workSize;
 	int stridedIndex;
 	int memChunk;
+	bool isNVIDIA = false;
 	int compMode;
 
 	/*Output vars*/

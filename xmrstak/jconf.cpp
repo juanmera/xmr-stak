@@ -515,8 +515,7 @@ bool jconf::parse_config(const char* sFilename, const char* sFilenamePools)
 
 	if(!prv->configValues[iCallTimeout]->IsUint64() ||
 		!prv->configValues[iNetRetry]->IsUint64() ||
-		!prv->configValues[iGiveUpLimit]->IsUint64())
-	{
+		!prv->configValues[iGiveUpLimit]->IsUint64()) {
 		Printer::inst()->print_msg(L0,
 			"Invalid config file. call_timeout, retry_time and giveup_limit need to be positive integers.");
 		return false;

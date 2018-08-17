@@ -25,17 +25,13 @@
 #endif
 
 
-namespace xmrstak
-{
-namespace amd
-{
+namespace xmrstak {
+namespace amd {
 
-class autoAdjust
-{
+class autoAdjust {
 public:
 
-	autoAdjust()
-	{
+	autoAdjust() {
 
 	}
 
@@ -44,12 +40,10 @@ public:
 	 * Routine exit the application and print the adjusted values if needed else
 	 * nothing is happened.
 	 */
-	bool printConfig()
-	{
+	bool printConfig() {
 		int platformIndex = getAMDPlatformIdx();
 
-		if(platformIndex == -1)
-		{
+		if(platformIndex == -1) {
 			Printer::inst()->print_msg(L0,"WARNING: No AMD OpenCL platform found. Possible driver issues or wrong vendor driver.");
 			return false;
 		}
@@ -59,8 +53,7 @@ public:
 
 		int deviceCount = devVec.size();
 
-		if(deviceCount == 0)
-		{
+		if(deviceCount == 0) {
 			Printer::inst()->print_msg(L0,"WARNING: No AMD device found.");
 			return false;
 		}
@@ -71,8 +64,7 @@ public:
 
 private:
 
-	void generateThreadConfig(const int platformIndex)
-	{
+	void generateThreadConfig(const int platformIndex) {
 		// load the template of the backend config into a char variable
 		const char *tpl =
 			#include "./config.tpl"
@@ -89,8 +81,7 @@ private:
 		);
 
 		std::string conf;
-		for(auto& ctx : devVec)
-		{
+		for(auto& ctx : devVec) {
 			size_t minFreeMem = 128u * byteToMiB;
 			/* 1000 is a magic selected limit, the reason is that more than 2GiB memory
 			 * sowing down the memory performance because of TLB cache misses
@@ -105,13 +96,21 @@ private:
 				ctx.name.compare("gfx900") == 0 ||
 				ctx.name.compare("gfx903") == 0 ||
 				ctx.name.compare("gfx905") == 0
-			)
-			{
+			) {
 				/* Increase the number of threads for AMD VEGA gpus.
 				 * Limit the number of threads based on the issue: https://github.com/fireice-uk/xmr-stak/issues/5#issuecomment-339425089
 				 * to avoid out of memory errors
 				 */
 				maxThreads = 2024u;
+			}
+
+			// NVIDIA optimizations
+			if(ctx.isNVIDIA && (
+					ctx.name.find("P100") != std::string::npos ||
+					ctx.name.find("V100") != std::string::npos)) {
+				// do not limit the number of threads
+				maxThreads = 40000u;
+				minFreeMem = 512u * byteToMiB;
 			}
 
 			// increase all intensity limits by two for aeon
@@ -127,14 +126,12 @@ private:
 			// map intensity to a multiple of the compute unit count, 8 is the number of threads per work group
 			size_t intensity = (possibleIntensity / (8 * ctx.computeUnits)) * ctx.computeUnits * 8;
 			//If the intensity is 0, then it's because the multiple of the unit count is greater than intensity
-			if (intensity == 0)
-			{
+			if (intensity == 0) {
 				Printer::inst()->print_msg(L0, "WARNING: Auto detected intensity unexpectedly low. Try to set the environment variable GPU_SINGLE_ALLOC_PERCENT.");
 				intensity = possibleIntensity;
 
 			}
-			if (intensity != 0)
-			{
+			if (intensity != 0) {
 				conf += std::string("  // gpu: ") + ctx.name + " memory:" + std::to_string(availableMem / byteToMiB) + "\n";
 				conf += std::string("  // compute units: ") + std::to_string(ctx.computeUnits) + "\n";
 				// set 8 threads per block (this is a good value for the most gpus)
@@ -143,9 +140,7 @@ private:
 					"    \"strided_index\" : 1, \"mem_chunk\" : 2,\n"
 					"    \"comp_mode\" : true\n" +
 					"  },\n";
-			}
-			else
-			{
+			} else {
 				Printer::inst()->print_msg(L0, "WARNING: Ignore gpu %s, %s MiB free memory is not enough to suggest settings.", ctx.name.c_str(), std::to_string(availableMem / byteToMiB).c_str());
 			}
 		}

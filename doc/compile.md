@@ -3,7 +3,6 @@
 ## Content Overview
 * [Build System](#build-system)
 * [Generic Build Options](#generic-build-options)
-* [CPU Build Options](#cpu-build-options)
 * [AMD Build Options](#amd-build-options)
 * [Compile on Windows](compile_Windows.md)
 * [Compile on Linux](compile_Linux.md)

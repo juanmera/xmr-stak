@@ -244,8 +244,7 @@ void Printer::inst()->print_msg(L1,const char* fmt, ...);
 void Printer::inst()->print_str(const char* str);
 #endif
 
-size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_code)
-{
+size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_code) {
 	size_t MaximumWorkSize;
 	cl_int ret;
 
@@ -380,9 +379,9 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 
 		std::string cache_file = get_home() + "/.openclcache/" + hash_hex_str + ".openclbin";
 		std::ifstream clBinFile(cache_file, std::ofstream::in | std::ofstream::binary);
-		if(xmrstak::params::inst().AMDCache == false || !clBinFile.good())
+		if(xmrstak::params::inst().cache == false || !clBinFile.good())
 		{
-			if(xmrstak::params::inst().AMDCache)
+			if(xmrstak::params::inst().cache)
 				Printer::inst()->print_msg(L1,"OpenCL device %u - Precompiled code %s not found. Compiling ...",ctx->deviceIdx, cache_file.c_str());
 			ctx->Program[ii] = clCreateProgramWithSource(opencl_ctx, 1, (const char**)&source_code, NULL, &ret);
 			if(ret != CL_SUCCESS)
@@ -449,8 +448,7 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 			}
 			while(status == CL_BUILD_IN_PROGRESS);
 
-			if(xmrstak::params::inst().AMDCache)
-			{
+			if(xmrstak::params::inst().cache) {
 				std::vector<size_t> binary_sizes(num_devices);
 				clGetProgramInfo (ctx->Program[ii], CL_PROGRAM_BINARY_SIZES, sizeof(size_t) * binary_sizes.size(), binary_sizes.data(), NULL);
 
@@ -480,9 +478,7 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 				file_stream.close();
 				Printer::inst()->print_msg(L1, "OpenCL device %u - Precompiled code stored in file %s",ctx->deviceIdx, cache_file.c_str());
 			}
-		}
-		else
-		{
+		} else {
 			Printer::inst()->print_msg(L1, "OpenCL device %u - Load precompiled code from file %s",ctx->deviceIdx, cache_file.c_str());
 			std::ostringstream ss;
 			ss << clBinFile.rdbuf();
@@ -496,14 +492,12 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 				opencl_ctx, 1, &ctx->DeviceID, &bin_size,
 				(const unsigned char **)&data_ptr, &clStatus, &ret
 			);
-			if(ret != CL_SUCCESS)
-			{
+			if(ret != CL_SUCCESS) {
 				Printer::inst()->print_msg(L1,"Error %s when calling clCreateProgramWithBinary. Try to delete file %s", err_to_str(ret), cache_file.c_str());
 				return ERR_OCL_API;
 			}
 			ret = clBuildProgram(ctx->Program[ii], 1, &ctx->DeviceID, NULL, NULL, NULL);
-			if(ret != CL_SUCCESS)
-			{
+			if(ret != CL_SUCCESS) {
 				Printer::inst()->print_msg(L1,"Error %s when calling clBuildProgram. Try to delete file %s", err_to_str(ret), cache_file.c_str());
 				return ERR_OCL_API;
 			}
@@ -511,53 +505,43 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 
 		std::vector<std::string> KernelNames = { "cn0", "cn1", "cn2", "Blake", "Groestl", "JH", "Skein" };
 		// append algorithm number to kernel name
-		for(int k = 0; k < 3; k++)
-			KernelNames[k] += std::to_string(miner_algo[ii]);
+		for(int k = 0; k < 3; k++) {
+		    KernelNames[k] += std::to_string(miner_algo[ii]);
+		}
 
-		if(ii == 0)
-		{
-			for(int i = 0; i < 7; ++i)
-			{
+		if(ii == 0) {
+			for(int i = 0; i < 7; ++i) {
 				ctx->Kernels[ii][i] = clCreateKernel(ctx->Program[ii], KernelNames[i].c_str(), &ret);
-				if(ret != CL_SUCCESS)
-				{
+				if(ret != CL_SUCCESS) {
 					Printer::inst()->print_msg(L1,"Error %s when calling clCreateKernel for kernel_0 %s.", err_to_str(ret), KernelNames[i].c_str());
 					return ERR_OCL_API;
 				}
 			}
-		}
-		else
-		{
-			for(int i = 0; i < 3; ++i)
-			{
+		} else {
+			for(int i = 0; i < 3; ++i) {
 				ctx->Kernels[ii][i] = clCreateKernel(ctx->Program[ii], KernelNames[i].c_str(), &ret);
-				if(ret != CL_SUCCESS)
-				{
+				if(ret != CL_SUCCESS) {
 					Printer::inst()->print_msg(L1,"Error %s when calling clCreateKernel for kernel_1 %s.", err_to_str(ret), KernelNames[i].c_str());
 					return ERR_OCL_API;
 				}
 			}
 			// move kernel from the main algorithm into the root algorithm kernel space
-			for(int i = 3; i < 7; ++i)
-			{
+			for(int i = 3; i < 7; ++i) {
 				ctx->Kernels[ii][i] = ctx->Kernels[0][i];
 			}
-
 		}
 	}
 	ctx->Nonce = 0;
 	return 0;
 }
 
-uint32_t getNumPlatforms()
-{
+uint32_t getNumPlatforms() {
 	cl_uint num_platforms = 0;
 	cl_int clStatus;
 
 	// Get platform and device information
 	clStatus = clGetPlatformIDs(0, NULL, &num_platforms);
-	if(clStatus != CL_SUCCESS)
-	{
+	if(clStatus != CL_SUCCESS) {
 		Printer::inst()->print_msg(L1,"WARNING: %s when calling clGetPlatformIDs for number of platforms.", err_to_str(clStatus));
 		return 0u;
 	}
@@ -565,8 +549,7 @@ uint32_t getNumPlatforms()
 	return num_platforms;
 }
 
-std::vector<GpuContext> getAMDDevices(int index)
-{
+std::vector<GpuContext> getAMDDevices(int index) {
 	std::vector<GpuContext> ctxVec;
 	std::vector<cl_platform_id> platforms;
 	std::vector<cl_device_id> device_list;
@@ -575,12 +558,12 @@ std::vector<GpuContext> getAMDDevices(int index)
 	cl_uint num_devices;
 	uint32_t numPlatforms = getNumPlatforms();
 
-	if(numPlatforms == 0)
+	if(numPlatforms == 0) {
 		return ctxVec;
+	}
 
 	platforms.resize(numPlatforms);
-	if((clStatus = clGetPlatformIDs(numPlatforms, platforms.data(), NULL)) != CL_SUCCESS)
-	{
+	if((clStatus = clGetPlatformIDs(numPlatforms, platforms.data(), NULL)) != CL_SUCCESS) {
 		Printer::inst()->print_msg(L1,"WARNING: %s when calling clGetPlatformIDs for platform information.", err_to_str(clStatus));
 		return ctxVec;
 	}
@@ -598,85 +581,72 @@ std::vector<GpuContext> getAMDDevices(int index)
 		return ctxVec;
 	}
 
-	for (size_t k = 0; k < num_devices; k++)
-	{
+	for (size_t k = 0; k < num_devices; k++) {
 		std::vector<char> devVendorVec(1024);
-		if((clStatus = clGetDeviceInfo(device_list[k], CL_DEVICE_VENDOR, devVendorVec.size(), devVendorVec.data(), NULL)) != CL_SUCCESS)
-		{
+		if((clStatus = clGetDeviceInfo(device_list[k], CL_DEVICE_VENDOR, devVendorVec.size(), devVendorVec.data(), NULL)) != CL_SUCCESS) {
 			Printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceInfo to get the device vendor name for device %u.", err_to_str(clStatus), k);
 			continue;
 		}
 
+        GpuContext ctx;
+        size_t maxMem;
 		std::string devVendor(devVendorVec.data());
-
-		bool isAMDDevice = devVendor.find("Advanced Micro Devices") != std::string::npos || devVendor.find("AMD") != std::string::npos;
-
 		std::string selectedOpenCLVendor = xmrstak::params::inst().openCLVendor;
-		if((isAMDDevice && selectedOpenCLVendor == "AMD"))
-		{
-			GpuContext ctx;
-			std::vector<char> devNameVec(1024);
-			size_t maxMem;
+        std::vector<char> devNameVec(1024);
 
-			if((clStatus = clGetDeviceInfo(device_list[k], CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(int), &(ctx.computeUnits), NULL)) != CL_SUCCESS)
-			{
-				Printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceInfo to get CL_DEVICE_MAX_COMPUTE_UNITS for device %u.", err_to_str(clStatus), k);
-				continue;
-			}
+        ctx.isNVIDIA = devVendor.find("NVIDIA") != std::string::npos;;
+        if((clStatus = clGetDeviceInfo(device_list[k], CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(int), &(ctx.computeUnits), NULL)) != CL_SUCCESS) {
+            Printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceInfo to get CL_DEVICE_MAX_COMPUTE_UNITS for device %u.", err_to_str(clStatus), k);
+            continue;
+        }
 
-			if((clStatus = clGetDeviceInfo(device_list[k], CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(size_t), &(maxMem), NULL)) != CL_SUCCESS)
-			{
-				Printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceInfo to get CL_DEVICE_MAX_MEM_ALLOC_SIZE for device %u.", err_to_str(clStatus), k);
-				continue;
-			}
+        if((clStatus = clGetDeviceInfo(device_list[k], CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(size_t), &(maxMem), NULL)) != CL_SUCCESS) {
+            Printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceInfo to get CL_DEVICE_MAX_MEM_ALLOC_SIZE for device %u.", err_to_str(clStatus), k);
+            continue;
+        }
 
-			if((clStatus = clGetDeviceInfo(device_list[k], CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(size_t), &(ctx.freeMem), NULL)) != CL_SUCCESS)
-			{
-				Printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceInfo to get CL_DEVICE_GLOBAL_MEM_SIZE for device %u.", err_to_str(clStatus), k);
-				continue;
-			}
+        if((clStatus = clGetDeviceInfo(device_list[k], CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(size_t), &(ctx.freeMem), NULL)) != CL_SUCCESS) {
+            Printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceInfo to get CL_DEVICE_GLOBAL_MEM_SIZE for device %u.", err_to_str(clStatus), k);
+            continue;
+        }
 
-			if((clStatus = clGetDeviceInfo(device_list[k], CL_DEVICE_NAME, devNameVec.size(), devNameVec.data(), NULL)) != CL_SUCCESS)
-			{
-				Printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceInfo to get CL_DEVICE_NAME for device %u.", err_to_str(clStatus), k);
-				continue;
-			}
+        if((clStatus = clGetDeviceInfo(device_list[k], CL_DEVICE_NAME, devNameVec.size(), devNameVec.data(), NULL)) != CL_SUCCESS) {
+            Printer::inst()->print_msg(L1,"WARNING: %s when calling clGetDeviceInfo to get CL_DEVICE_NAME for device %u.", err_to_str(clStatus), k);
+            continue;
+        }
 
-			// if environment variable GPU_SINGLE_ALLOC_PERCENT is not set we can not allocate the full memory
-			ctx.deviceIdx = k;
-			ctx.freeMem = std::min(ctx.freeMem, maxMem);
-			ctx.name = std::string(devNameVec.data());
-			ctx.DeviceID = device_list[k];
-			Printer::inst()->print_msg(L0,"Found OpenCL GPU %s.",ctx.name.c_str());
-			ctxVec.push_back(ctx);
-		}
+        if (ctx.isNVIDIA) {
+            maxMem = ctx.freeMem;
+        }
+
+        // if environment variable GPU_SINGLE_ALLOC_PERCENT is not set we can not allocate the full memory
+        ctx.deviceIdx = k;
+        ctx.freeMem = std::min(ctx.freeMem, maxMem);
+        ctx.name = std::string(devNameVec.data());
+        ctx.DeviceID = device_list[k];
+        Printer::inst()->print_msg(L0,"Found OpenCL GPU %s.",ctx.name.c_str());
+        ctxVec.push_back(ctx);
 	}
 
 	return ctxVec;
 }
 
-int getAMDPlatformIdx()
-{
+int getAMDPlatformIdx() {
 
 	uint32_t numPlatforms = getNumPlatforms();
-
-	if(numPlatforms == 0)
-	{
+	if(numPlatforms == 0) {
 		Printer::inst()->print_msg(L0,"WARNING: No OpenCL platform found.");
 		return -1;
 	}
-	cl_platform_id * platforms = NULL;
-	cl_int clStatus;
+	cl_platform_id *platforms = NULL;
 
 	platforms = (cl_platform_id *) malloc(sizeof(cl_platform_id) * numPlatforms);
-	clStatus = clGetPlatformIDs(numPlatforms, platforms, NULL);
 
 	int platformIndex = -1;
-	// Mesa OpenCL is the fallback if no AMD or Apple OpenCL is found
-	int mesaPlatform = -1;
+	int mesaPlatform = -1; // Mesa OpenCL is the fallback if no AMD or Apple OpenCL is found
+    auto clStatus = clGetPlatformIDs(numPlatforms, platforms, NULL);
 
-	if(clStatus == CL_SUCCESS)
-	{
+	if(clStatus == CL_SUCCESS) {
 		for (int i = 0; i < numPlatforms; i++) {
 			size_t infoSize;
 			clGetPlatformInfo(platforms[i], CL_PLATFORM_VENDOR, 0, NULL, &infoSize);
@@ -684,33 +654,24 @@ int getAMDPlatformIdx()
 
 			clGetPlatformInfo(platforms[i], CL_PLATFORM_VENDOR, infoSize, platformNameVec.data(), NULL);
 			std::string platformName(platformNameVec.data());
-
-			bool isAMDOpenCL = platformName.find("Advanced Micro Devices") != std::string::npos ||
-				platformName.find("Apple") != std::string::npos ||
-				platformName.find("Mesa") != std::string::npos;
 			std::string selectedOpenCLVendor = xmrstak::params::inst().openCLVendor;
-			if((isAMDOpenCL && selectedOpenCLVendor == "AMD"))
-			{
-				Printer::inst()->print_msg(L0,"Found %s platform index id = %i, name = %s", selectedOpenCLVendor.c_str(), i , platformName.c_str());
-				if(platformName.find("Mesa") != std::string::npos)
-					mesaPlatform = i;
-				else
-				{
-					// exit if AMD or Apple platform is found
-					platformIndex = i;
-					break;
-				}
-			}
+            Printer::inst()->print_msg(L0,"Found %s platform index id = %i, name = %s", selectedOpenCLVendor.c_str(), i , platformName.c_str());
+            if(platformName.find("Mesa") != std::string::npos) {
+                mesaPlatform = i;
+            } else {
+                // exit if AMD or Apple platform is found
+                platformIndex = i;
+                break;
+            }
 		}
 		// fall back to Mesa OpenCL
-		if(platformIndex == -1 && mesaPlatform != -1)
-		{
+		if(platformIndex == -1 && mesaPlatform != -1) {
 			Printer::inst()->print_msg(L0,"No AMD platform found select Mesa as OpenCL platform");
 			platformIndex = mesaPlatform;
 		}
-	}
-	else
+	} else {
 		Printer::inst()->print_msg(L1,"WARNING: %s when calling clGetPlatformIDs for platform information.", err_to_str(clStatus));
+	}
 
 	free(platforms);
 	return platformIndex;
@@ -719,23 +680,20 @@ int getAMDPlatformIdx()
 // RequestedDeviceIdxs is a list of OpenCL device indexes
 // NumDevicesRequested is number of devices in RequestedDeviceIdxs list
 // Returns 0 on success, -1 on stupid params, -2 on OpenCL API error
-size_t InitOpenCL(GpuContext* ctx, size_t num_gpus, size_t platform_idx)
-{
+size_t InitOpenCL(GpuContext* ctx, size_t num_gpus, size_t platform_idx) {
 
 	cl_context opencl_ctx;
 	cl_int ret;
 	cl_uint entries;
 
-	if((ret = clGetPlatformIDs(0, NULL, &entries)) != CL_SUCCESS)
-	{
+	if((ret = clGetPlatformIDs(0, NULL, &entries)) != CL_SUCCESS) {
 		Printer::inst()->print_msg(L1,"Error %s when calling clGetPlatformIDs for number of platforms.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
 
 
 	// The number of platforms naturally is the index of the last platform plus one.
-	if(entries <= platform_idx)
-	{
+	if(entries <= platform_idx) {
 		Printer::inst()->print_msg(L1,"Selected OpenCL platform index %d doesn't exist.", platform_idx);
 		return ERR_STUPID_PARAMS;
 	}
@@ -746,8 +704,7 @@ size_t InitOpenCL(GpuContext* ctx, size_t num_gpus, size_t platform_idx)
 #else
 	cl_platform_id* PlatformIDList = (cl_platform_id*)_alloca(entries * sizeof(cl_platform_id));
 #endif
-	if((ret = clGetPlatformIDs(entries, PlatformIDList, NULL)) != CL_SUCCESS)
-	{
+	if((ret = clGetPlatformIDs(entries, PlatformIDList, NULL)) != CL_SUCCESS) {
 		Printer::inst()->print_msg(L1,"Error %s when calling clGetPlatformIDs for platform ID information.", err_to_str(ret));
 		return ERR_OCL_API;
 	}
@@ -847,8 +804,7 @@ size_t InitOpenCL(GpuContext* ctx, size_t num_gpus, size_t platform_idx)
 			Printer::inst()->print_msg(L0, "WARNING %s: gpu %d intensity is not a multiple of 'worksize', auto reduce intensity to %d", backendName.c_str(), ctx[i].deviceIdx, int(reduced_intensity));
 		}
 
-		if((ret = InitOpenCLGpu(opencl_ctx, &ctx[i], source_code.c_str())) != ERR_SUCCESS)
-		{
+		if((ret = InitOpenCLGpu(opencl_ctx, &ctx[i], source_code.c_str())) != ERR_SUCCESS) {
 			return ret;
 		}
 	}

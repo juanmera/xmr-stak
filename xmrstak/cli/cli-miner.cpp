@@ -72,8 +72,7 @@ void help()
 	cout<<"  --benchwait WAIT_SEC             ... benchmark wait time"<<endl;
 	cout<<"  --benchwork WORK_SEC             ... benchmark work time"<<endl;
 #ifndef CONF_NO_OPENCL
-	cout<<"  --noAMD                    disable the AMD miner backend"<<endl;
-	cout<<"  --noAMDCache               disable the AMD(OpenCL) cache for precompiled binaries"<<endl;
+	cout<<"  --noCache               disable the AMD(OpenCL) cache for precompiled binaries"<<endl;
 	cout<<"  --openCLVendor VENDOR      use OpenCL driver of VENDOR and devices AMD"<<endl;
 	cout<<"                             default: AMD"<<endl;
 	cout<<"  --amd FILE                 AMD backend miner config file"<<endl;
@@ -386,10 +385,6 @@ int main(int argc, char *argv[])
 			win_exit();
 			return 0;
 		}
-		else if(opName.compare("--noAMD") == 0)
-		{
-			params::inst().useAMD = false;
-		}
 		else if(opName.compare("--openCLVendor") == 0)
 		{
 			++i;
@@ -408,9 +403,9 @@ int main(int argc, char *argv[])
 				return 1;
 			}
 		}
-		else if(opName.compare("--noAMDCache") == 0)
+		else if(opName.compare("--noCache") == 0)
 		{
-			params::inst().AMDCache = false;
+			params::inst().cache = false;
 		}
 		else if(opName.compare("--amd") == 0)
 		{
@@ -645,7 +640,6 @@ int main(int argc, char *argv[])
 	Printer::inst()->print_str(get_version_str_short().c_str());
 	Printer::inst()->print_str("\n\n");
 	Printer::inst()->print_str("Brought to you by fireice_uk and psychocrypt under GPLv3.\n");
-	Printer::inst()->print_str("Based on CPU mining code by wolf9466 (heavily optimized by fireice_uk).\n");
 #ifndef CONF_NO_OPENCL
 	Printer::inst()->print_str("Based on OpenCL mining code by wolf9466.\n");
 #endif

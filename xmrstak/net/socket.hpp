@@ -16,8 +16,7 @@ protected:
 	std::atomic<bool> sock_closed;
 };
 
-class plain_socket : public base_socket
-{
+class plain_socket : public base_socket {
 public:
 	plain_socket(jpsock* err_callback);
 
@@ -38,8 +37,7 @@ typedef struct ssl_ctx_st SSL_CTX;
 typedef struct bio_st BIO;
 typedef struct ssl_st SSL;
 
-class tls_socket : public base_socket
-{
+class tls_socket : public base_socket {
 public:
 	tls_socket(jpsock* err_callback);
 
